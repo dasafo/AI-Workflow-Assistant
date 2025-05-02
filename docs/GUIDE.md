@@ -8,14 +8,18 @@ Este proyecto integra automatizaciones con inteligencia artificial usando:
 - Protocolo **MCP (Model Context Protocol)** para estructurar la comunicación entre componentes
 - IA para tareas como resumen de textos, clasificación, generación de reportes, etc.
 - Notificaciones en Telegram, emails o dashboards
+- Persistencia en PostgreSQL para trazabilidad y análisis
+- Contenerización profesional con Docker
 
 ---
 
 ## 📁 Estructura del Repositorio
+
 ```bash
 AI-Workflow-Assistant/
 ├── backend/                   # Backend en FastAPI actuando como MCP Host
 │   ├── main.py                # Punto de entrada principal
+│   ├── db.py                  # Conexión y persistencia en PostgreSQL
 │   ├── requirements.txt       # Dependencias de Python
 │   ├── mcp/                   # Lógica del protocolo MCP (Input/Output, contexto, etc.)
 │   ├── plugins/               # Módulos de IA: summarize, classify, extract...
@@ -26,7 +30,7 @@ AI-Workflow-Assistant/
 ├── docs/
 │   └── GUIDE.md               # Guía de desarrollo del proyecto (esta misma hoja de ruta)
 │
-├── docker-compose.yml         # Orquestación del backend y n8n con Docker
+├── docker-compose.yml         # Orquestación del backend, PostgreSQL y n8n con Docker
 │
 ├── .env
 ├── .env.example
@@ -34,6 +38,25 @@ AI-Workflow-Assistant/
 ├── .gitignore
 └── README.md                  # Descripción general del proyecto
 ```
+
+
+## ⚙️ Automatización con Makefile
+
+Se incluye un `Makefile` para automatizar tareas de desarrollo y testing:
+
+#### 📋 Comandos disponibles
+
+| Comando         | Descripción                                     |
+|-----------------|-------------------------------------------------|
+| `make up`       | Levanta backend, PostgreSQL y n8n con Docker    |
+| `make stop`     | Detiene los contenedores                        |
+| `make build`    | Reconstruye la imagen del backend               |
+| `make restart`  | Reinicia el backend con build                   |
+| `make logs`     | Muestra logs en tiempo real del backend         |
+| `make curl`     | Prueba el endpoint `/mcp/invoke` vía `curl`     |
+| `make db`       | Accede al cliente `psql` dentro del contenedor  |
+| `make reset-db` | Elimina volumen de datos de PostgreSQL (⚠️)     |
+| `make help`     | Muestra la lista de comandos disponibles        |
 
 ## 🗺️ Hoja de Ruta del Proyecto
 
@@ -58,9 +81,10 @@ AI-Workflow-Assistant/
 ### 🔁 FASE 2: Integración con n8n
 - [x] Crear flujo en n8n que reciba documentos por Webhook
 - [x] Enviar texto al endpoint `/mcp/invoke` con estructura MCP
-- [ ] Recibir y parsear la respuesta para:
-  - [ ] Enviar mensaje a Telegram o email
-  - [ ] Guardar en base de datos (opcional)
+- [x] Recibir y parsear la respuesta para:
+  - [x] Enviar mensaje a Telegram o email
+  - [x] Guardar en base de datos (opcional)
+  - [x] Registrar en Google Sheets
 - [x] Exportar el flujo a `n8n-flows/` como JSON
 
 ---
@@ -78,8 +102,9 @@ AI-Workflow-Assistant/
 - [x] Dockerizar todo: backend + n8n en `docker-compose.yml`
 - [x] Habilitar logging y trazabilidad (logs de llamadas, errores)
 - [ ] Añadir autenticación (token simple o JWT)
-- [ ] Persistencia con SQLite/PostgreSQL
+- [x] Persistencia con PostgreSQL
 - [x] Documentación OpenAPI en `/docs`
+- [ ] Endpoint GET para consultar resúmenes guardados
 
 ---
 
