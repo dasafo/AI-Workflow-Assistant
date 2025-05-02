@@ -22,7 +22,7 @@ Este proyecto demuestra cómo construir una arquitectura modular y extensible de
 | **FastAPI** | Backend IA (MCP Host) |
 | **n8n**     | Orquestador de flujos de trabajo |
 | **MCP (Model Context Protocol)** | Protocolo de integración entre sistemas |
-| **OpenAI / Transformers** | Motor de IA para plugins |
+| **OpenAI (GPT-4o-mini)** | Motor de IA para resumen inteligente |
 | **Docker + Compose** | Contenedores y orquestación |
 | **Ngrok** (dev) | Exposición temporal de servicios locales |
 
@@ -104,6 +104,28 @@ Deberías recibir una respuesta estructurada en formato MCP con el resumen gener
 
 El acceso a `n8n` requiere las credenciales definidas en `.env`.
 
+## 🧠 Integración con OpenAI
+
+Este proyecto utiliza OpenAI GPT-4o-mini para generar resúmenes reales a través del plugin summarize.
+
+- Cuando task == "summarize":
+
+    - El backend llama a OpenAI (gpt-4o-mini-2024-07-18)
+
+    - Recibe un resumen del texto
+
+    - Lo guarda en PostgreSQL
+
+    - Lo envía a Telegram y Google Sheets
+
+**Variable requerida:**
+
+```bash
+OPENAI_API_KEY=sk-xxxxxx
+```
+
+La temperatura está fijada en `0.3` y el límite en `200 tokens`.
+
 ## 🧪 Flujos en n8n
 
 - Entrada: Telegram, Webhook HTTP, Email
@@ -120,6 +142,24 @@ El acceso a `n8n` requiere las credenciales definidas en `.env`.
 
 Puedes importar los flujos desde la carpeta `n8n-flows/`.
 
+## 🔐 Seguridad por API Key
+
+El endpoint `/mcp/invoke` del backend requiere una API Key para autorizar las peticiones.
+
+- Se debe incluir un header personalizado:
+```http
+  X-API-Key: <tu_api_key>
+```
+
+
+- Esta clave se define en el archivo `.env`:
+- 
+```http
+API_KEY= <clave>
+```
+
+En n8n se puede usar directamente o vía `{{ $env.API_KEY }}`.
+
 ## 📄 Documentación técnica extendida
 
 Consulta la guía completa del proyecto en `docs/GUIDE.md`
@@ -131,8 +171,10 @@ Incluye:
 - Hoja de ruta y fases del proyecto
 
 - Plugins IA disponibles y planificados
-
-- Comandos útiles
+  
+- Seguridad por API Key
+  
+- Integración con OpenAI
 
 - Variables de entorno
 

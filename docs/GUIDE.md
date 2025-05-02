@@ -105,6 +105,7 @@ Se incluye un `Makefile` para automatizar tareas de desarrollo y testing:
 - [x] Persistencia con PostgreSQL
 - [x] Documentación OpenAPI en `/docs`
 - [ ] Endpoint GET para consultar resúmenes guardados
+- [x] Seguridad con API Key en el backend
 
 ---
 
