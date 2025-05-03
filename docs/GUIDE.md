@@ -86,6 +86,8 @@ Se incluye un `Makefile` para automatizar tareas de desarrollo y testing:
   - [x] Guardar en base de datos (opcional)
   - [x] Registrar en Google Sheets
 - [x] Exportar el flujo a `n8n-flows/` como JSON
+- [x] Configurar correctamente el webhook con ngrok usando `WEBHOOK_URL` para evitar puertos no permitidos por Telegram
+- [x] Validar que el bot de Telegram activa correctamente el Trigger en n8n
 
 ---
 
@@ -99,7 +101,7 @@ Se incluye un `Makefile` para automatizar tareas de desarrollo y testing:
 ---
 
 ### 📦 FASE 4: Arquitectura profesional
-- [x] Dockerizar todo: backend + n8n en `docker-compose.yml`
+- [x] Dockerizar backend + postgree en `docker-compose.yml`
 - [x] Habilitar logging y trazabilidad (logs de llamadas, errores)
 - [ ] Añadir autenticación (token simple o JWT)
 - [x] Persistencia con PostgreSQL

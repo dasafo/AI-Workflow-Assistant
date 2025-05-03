@@ -30,11 +30,19 @@ services:
       - "5678:5678"
     env_file:
       - .env
+    environment:
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PORT=${N8N_PORT}
+      - N8N_PROTOCOL=${N8N_PROTOCOL}
     volumes:
       - n8n_data:/home/node/.n8n
     networks:
       - ai-network
     restart: unless-stopped
+
+
+
 
 volumes:
   postgres_data:

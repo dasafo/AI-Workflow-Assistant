@@ -52,3 +52,30 @@ reset-db:
 help:
 	@echo "Comandos disponibles:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' Makefile | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[1;32m%-20s\033[0m %s\n", $$1, $$2}'
+
+# === Integraciones ===
+## Registra el webhook de Telegram en n8n
+## Requiere que el contenedor de ngrok esté corriendo
+## y que el puerto 4040 esté expuesto.
+ngrok-telegram:
+	@echo "🔎 Obteniendo URL pública de ngrok..."
+	@sleep 1
+	@NGROK_URL=$$(curl -s localhost:4040/api/tunnels | jq -r '.tunnels[] | select(.proto=="https") | .public_url'); \
+	if [ -z "$$NGROK_URL" ]; then \
+		echo "❌ No se encontró una URL HTTPS de ngrok. ¿Está corriendo ngrok?"; \
+		exit 1; \
+	fi; \
+	echo "🌍 URL pública detectada: $$NGROK_URL"; \
+	echo ""; \
+	echo "📋 Pega aquí la Production URL del Telegram Trigger que copiaste desde n8n (ej: http://localhost:5678/webhook/...)"; \
+	read -p "➡️  " URL_LOCAL; \
+	IS_LOCAL=$$(echo $$URL_LOCAL | grep -c "localhost:5678"); \
+	if [ "$$IS_LOCAL" -eq 1 ]; then \
+		URL_FINAL=$$(echo $$URL_LOCAL | sed "s|http://localhost:5678|$$NGROK_URL|"); \
+	else \
+		URL_FINAL=$$URL_LOCAL; \
+	fi; \
+	echo ""; \
+	echo "🚀 Registrando webhook con curl: $$URL_FINAL"; \
+	curl -s $$URL_FINAL && echo "\n✅ Webhook registrado correctamente con Telegram." || echo "\n❌ Error al registrar el webhook."
+
