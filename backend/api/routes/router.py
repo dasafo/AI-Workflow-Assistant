@@ -1,14 +1,11 @@
-from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi import APIRouter, Header, HTTPException
 from core.schemas import InputMessage, OutputMessage, RawTelegramMessage
-from services.db import guardar_resumen
 import os
 from services.tasks import summarize, translate, classify
-
-# ...existing code...
+from services.db import guardar_resumen, guardar_traduccion, guardar_clasificacion
 
 router = APIRouter()
 
-# Mapa de tareas
 TASKS = {
     "summarize": summarize.run,
     "translate": translate.run,
@@ -40,7 +37,6 @@ def mcp_telegram(raw_msg: RawTelegramMessage, x_api_key: str = Header(default=No
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     try:
-        # Extraer texto y chat ID
         msg_text = raw_msg.message.get("text", "")
         user_id = str(raw_msg.message.get("chat", {}).get("id", "unknown"))
 
@@ -49,9 +45,8 @@ def mcp_telegram(raw_msg: RawTelegramMessage, x_api_key: str = Header(default=No
                 success=False, result=None, error="Invalid command format"
             )
 
-        # Parsear comando y argumentos
         parts = msg_text.strip().split(" ")
-        task = parts[0][1:].lower()  # sin "/"
+        task = parts[0][1:].lower()
         text = " ".join(parts[1:])
 
         handler = TASKS.get(task)
@@ -60,14 +55,15 @@ def mcp_telegram(raw_msg: RawTelegramMessage, x_api_key: str = Header(default=No
                 success=False, result=None, error=f"Unknown task: {task}"
             )
 
-        # Ejecutar tarea
         result = handler({"text": text}, {"user_id": user_id})
 
-        # Guardar resumen si aplica
+        # Guardar en la base de datos según la tarea
         if task == "summarize":
-            from db import guardar_resumen
-
             guardar_resumen(user_id, text, result.get("summary", ""))
+        elif task == "translate":
+            guardar_traduccion(user_id, text, result.get("translation", ""))
+        elif task == "classify":
+            guardar_clasificacion(user_id, text, result.get("label", ""))
 
         return OutputMessage(success=True, result=result, error=None)
 

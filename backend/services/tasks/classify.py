@@ -1,25 +1,29 @@
-import os
 from openai import OpenAI
+import os
+from services.db import guardar_clasificacion
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
-def run(input_data: dict, context: dict) -> dict:
-    text = input_data.get("text", "")
+def run(input: dict, context: dict) -> dict:
+    text = input.get("text", "")
+    user_id = context.get("user_id", "desconocido")
 
     response = client.chat.completions.create(
         model="gpt-4o-mini-2024-07-18",
         messages=[
             {
                 "role": "system",
-                "content": "Clasifica el texto en: educación, negocios, ciencia, salud, entretenimiento, política, tecnología u otro.",
+                "content": "Clasifica este texto según su intención (por ejemplo: pregunta, información, opinión, urgente, irrelevante, etc.).",
             },
-            {"role": "user", "content": f"Clasifica este texto:\n\n{text}"},
+            {"role": "user", "content": text},
         ],
-        temperature=0,
+        temperature=0.2,
         max_tokens=100,
     )
 
-    category = response.choices[0].message.content.strip()
+    clasificacion = response.choices[0].message.content.strip()
 
-    return {"category": category, "input": input_data, "context": context}
+    guardar_clasificacion(user_id, text, clasificacion)
+
+    return {"classification": clasificacion}

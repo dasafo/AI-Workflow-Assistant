@@ -1,5 +1,6 @@
 import os
 import psycopg2
+from datetime import datetime
 
 
 def get_connection():
@@ -12,30 +13,46 @@ def get_connection():
     )
 
 
-def guardar_resumen(user_id: str, texto_original: str, resumen: str):
+def guardar_resumen(user_id, texto_original, resumen):
     conn = get_connection()
     cur = conn.cursor()
-
-    # Verifica si ya existe un registro idéntico
     cur.execute(
         """
-        SELECT COUNT(*) FROM resumenes
-        WHERE user_id = %s AND texto_original = %s AND resumen = %s
+        INSERT INTO resumenes (user_id, texto_original, resumen, fecha)
+        VALUES (%s, %s, %s, %s)
         """,
-        (user_id, texto_original, resumen),
+        (user_id, texto_original, resumen, datetime.utcnow()),
     )
-    count = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
 
-    # Solo inserta si no existe
-    if count == 0:
-        cur.execute(
-            """
-            INSERT INTO resumenes (user_id, texto_original, resumen)
-            VALUES (%s, %s, %s)
-            """,
-            (user_id, texto_original, resumen),
-        )
-        conn.commit()
 
+def guardar_traduccion(user_id, texto_original, traduccion):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO traducciones (user_id, texto_original, traduccion, fecha)
+        VALUES (%s, %s, %s, %s)
+        """,
+        (user_id, texto_original, traduccion, datetime.utcnow()),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def guardar_clasificacion(user_id, texto_original, etiqueta):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO clasificaciones (user_id, texto_original, etiqueta, fecha)
+        VALUES (%s, %s, %s, %s)
+        """,
+        (user_id, texto_original, etiqueta, datetime.utcnow()),
+    )
+    conn.commit()
     cur.close()
     conn.close()
