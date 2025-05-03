@@ -12,7 +12,7 @@ def get_connection():
     )
 
 
-def guardar_resumen(user_id, texto_original, resumen):
+def guardar_resumen(user_id: str, texto_original: str, resumen: str):
     conn = get_connection()
     cur = conn.cursor()
 

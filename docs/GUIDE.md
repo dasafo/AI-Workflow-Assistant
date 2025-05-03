@@ -18,25 +18,34 @@ Este proyecto integra automatizaciones con inteligencia artificial usando:
 ```bash
 AI-Workflow-Assistant/
 ├── backend/                   # Backend en FastAPI actuando como MCP Host
-│   ├── main.py                # Punto de entrada principal
-│   ├── db.py                  # Conexión y persistencia en PostgreSQL
-│   ├── requirements.txt       # Dependencias de Python
-│   ├── mcp/                   # Lógica del protocolo MCP (Input/Output, contexto, etc.)
-│   ├── plugins/               # Módulos de IA: summarize, classify, extract...
-│   └── models/                # Integraciones con OpenAI, HuggingFace, o modelos locales
+│   ├── api/                  # Rutas principales de la API REST (router MCP, etc.)
+│   │   ├── __init__.py
+│   │   └── routes/
+│   │       └── router.py     # Contiene los endpoints `/mcp/invoke` y `/mcp/telegram`
+│   ├── core/                 # Schemas y estructuras de entrada/salida MCP
+│   │   └── schemas.py
+│   ├── services/             # Lógica de backend (tareas IA y persistencia)
+│   │   ├── db.py             # Guardado de resúmenes en PostgreSQL
+│   │   └── tasks/
+│   │       ├── summarize.py
+│   │       ├── translate.py
+│   │       └── classify.py
+│   ├── models/               # (Reservado para futuras integraciones)
+│   ├── plugins/              # (Reservado para futuros conectores IA)
+│   ├── main.py               # Punto de entrada principal
+│   └── requirements.txt
 │
-├── n8n-flows/                 # Flujos exportados de n8n (en formato JSON)
+├── n8n-flows/                # Flujos exportados de n8n (en formato JSON)
 │
 ├── docs/
-│   └── GUIDE.md               # Guía de desarrollo del proyecto (esta misma hoja de ruta)
+│   └── GUIDE.md              # Guía de desarrollo del proyecto (esta misma hoja de ruta)
 │
-├── docker-compose.yml         # Orquestación del backend, PostgreSQL y n8n con Docker
-│
+├── docker-compose.yml        # Orquestación del backend, PostgreSQL y n8n con Docker
+├── Makefile
 ├── .env
 ├── .env.example
-│
 ├── .gitignore
-└── README.md                  # Descripción general del proyecto
+└── README.md                 # Descripción general del proyecto
 ```
 
 
@@ -93,7 +102,8 @@ Se incluye un `Makefile` para automatizar tareas de desarrollo y testing:
 
 ### 🧠 FASE 3: Plugins de IA
 - [x] `summarize`: resumen de texto largo
-- [ ] `classify`: detección de intención o urgencia
+- [x] `classify`: detección de intención o urgencia
+- [x] `translate`: traducir texto
 - [ ] `extract`: extracción de entidades clave (personas, fechas, números)
 - [ ] `report`: generación de resumen semanal (integración con Google Calendar opcional)
 - [ ] `generate`: generación de texto o informes
@@ -102,6 +112,7 @@ Se incluye un `Makefile` para automatizar tareas de desarrollo y testing:
 
 ### 📦 FASE 4: Arquitectura profesional
 - [x] Dockerizar backend + postgree en `docker-compose.yml`
+- [x] Estructura modular profesional (con /api, /services, /core)
 - [x] Habilitar logging y trazabilidad (logs de llamadas, errores)
 - [ ] Añadir autenticación (token simple o JWT)
 - [x] Persistencia con PostgreSQL
@@ -124,15 +135,19 @@ Se incluye un `Makefile` para automatizar tareas de desarrollo y testing:
 ``` bash
 # Levantar los servicios
 docker compose up -d
+make up # usando makefile
 
 # Reconstruir backend tras cambios en dependencias
 docker compose build backend
+make build # usando makefile
 
 # Parar y eliminar contenedores
 docker compose down
+make stop # usando makefile
 
 # Ver logs en tiempo real del backend
 docker compose logs -f backend
+make logs # usando makefile
 ```
 
 ## 🧪 Test del backend con curl

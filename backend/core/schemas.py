@@ -28,3 +28,7 @@ class OutputMessage(BaseModel):
     result: Optional[Dict[str, Any]] = None
     # Error message if the operation failed
     error: Optional[str] = None
+
+
+class RawTelegramMessage(BaseModel):
+    message: dict  # mensaje entero que llega desde Telegram

@@ -1,9 +1,21 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from api.routes.router import router as mcp_router
+from dotenv import load_dotenv
 
-from mcp.router import router as mcp_router
+load_dotenv()
 
-app = FastAPI()
+app = FastAPI(
+    title="AI Personal Workflow Assistant",
+    description="API para procesamiento de tareas de IA",
+    version="1.0.0",
+)
+
+# El endpoint de resumen simple debería moverse al router correspondiente
+# y mantener solo la lógica principal aquí
+
+# Incluir el router principal
+app.include_router(mcp_router)
 
 
 # This is a simple FastAPI application that provides an endpoint for summarizing text.

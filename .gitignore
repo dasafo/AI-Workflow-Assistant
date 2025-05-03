@@ -56,3 +56,9 @@ secrets.json
 *.swp
 *.bak
 *.tmp
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python

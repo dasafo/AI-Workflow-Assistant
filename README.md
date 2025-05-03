@@ -25,6 +25,7 @@ Este proyecto demuestra cómo construir una arquitectura modular y extensible de
 | **OpenAI (GPT-4o-mini)** | Motor de IA para resumen inteligente |
 | **Docker + Compose** | Contenedores y orquestación |
 | **Ngrok** (dev) | Exposición temporal de servicios locales |
+| **PostgreSQL** | Persistencia de resúmenes y trazabilidad |
 
 
 
@@ -33,18 +34,23 @@ Este proyecto demuestra cómo construir una arquitectura modular y extensible de
 ```bash
 AI-Workflow-Assistant/
 ├── backend/                 # FastAPI + lógica IA modular
-│   ├── mcp/                 # Estructuras MCP y endpoint /mcp/invoke
-│   ├── plugins/             # Funciones IA (summarize, classify, extract...)
-│   ├── models/              # Modelos locales o externos
-│   └── requirements.txt     # Dependencias Python
+│   ├── api/
+│   │   └── routes/          # Endpoints /mcp/invoke y /mcp/telegram
+│   ├── core/                # Esquemas y estructuras MCP
+│   ├── services/            # db.py + tareas IA
+│   │   └── tasks/           # summarize.py, classify.py, etc.
+│   ├── models/              # Modelos locales o externos (reservado)
+│   ├── plugins/             # (Reservado para futuros conectores)
+│   └── main.py              # Punto de entrada
 │
 ├── n8n-flows/               # Flujos exportados desde n8n (JSON)
 ├── docs/                    # Documentación técnica
 │   └── GUIDE.md             # Hoja de ruta técnica detallada
 │
-├── docker-compose.yml       # Orquestación backend + n8n
-├── .env                     # Variables de entorno (no se versiona)
-├── .env.example             # Plantilla para configuración
+├── docker-compose.yml       # Orquestación backend + PostgreSQL + n8n
+├── Makefile
+├── .env                     # Variables de entorno
+├── .env.example             # Plantilla de configuración
 └── README.md                # Este archivo
 ```
 
@@ -79,6 +85,7 @@ cp .env.example .env
 
 ```bash
 docker compose up --build
+make up # con Makefile
 ```
 
 ## 🧪 Prueba rápida del backend (curl)
@@ -86,6 +93,7 @@ docker compose up --build
 ```bash
 curl -X POST http://localhost:8000/mcp/invoke \
   -H "Content-Type: application/json" \
+  -H "x-api-key: <TU_API_KEY>" \
   -d '{
     "task": "summarize",
     "input": { "text": "Texto de prueba para resumir automáticamente..." },
