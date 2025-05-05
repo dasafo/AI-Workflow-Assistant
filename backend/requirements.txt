@@ -1,0 +1,19 @@
+# API y servidor
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+
+# Base de datos
+psycopg2-binary>=2.9.9
+sqlalchemy>=2.0
+alembic>=1.12.1
+
+# IA y procesamiento
+openai>=1.0.0
+python-dotenv>=1.0.0
+
+# Utilidades
+python-jose[cryptography]>=3.3.0  # Para JWT si lo necesitamos
+requests>=2.31.0  # Para health checks
+python-multipart>=0.0.6  # Para form-data
+typing-extensions>=4.8.0

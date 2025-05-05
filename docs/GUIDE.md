@@ -1,5 +1,28 @@
 # 🧠 AI Personal Workflow Assistant – Guía de Desarrollo
 
+## 📋 Índice
+- [🧠 AI Personal Workflow Assistant – Guía de Desarrollo](#-ai-personal-workflow-assistant--guía-de-desarrollo)
+  - [📋 Índice](#-índice)
+  - [🎯 Descripción del Proyecto](#-descripción-del-proyecto)
+  - [📁 Estructura del Repositorio](#-estructura-del-repositorio)
+  - [⚙️ Automatización con Makefile](#️-automatización-con-makefile)
+      - [📋 Comandos disponibles](#-comandos-disponibles)
+  - [🗺️ Hoja de Ruta del Proyecto](#️-hoja-de-ruta-del-proyecto)
+    - [✅ FASE 0: Preparación](#-fase-0-preparación)
+    - [🔧 FASE 1: Backend en FastAPI como MCP Host](#-fase-1-backend-en-fastapi-como-mcp-host)
+    - [🔁 FASE 2: Integración con n8n](#-fase-2-integración-con-n8n)
+    - [🧠 FASE 3: Plugins de IA](#-fase-3-plugins-de-ia)
+    - [📦 FASE 4: Arquitectura profesional](#-fase-4-arquitectura-profesional)
+    - [🧪 FASE 5: Calidad y preparación para portafolio](#-fase-5-calidad-y-preparación-para-portafolio)
+  - [🔄 Comandos útiles](#-comandos-útiles)
+  - [🧪 Test del backend con curl](#-test-del-backend-con-curl)
+  - [✨ Recursos útiles](#-recursos-útiles)
+  - [📌 Autor](#-autor)
+
+---
+
+## 🎯 Descripción del Proyecto
+
 Este proyecto demuestra cómo construir un sistema de automatización inteligente basado en IA, utilizando un backend modular compatible con el protocolo MCP y flujos orquestados desde `n8n`.
 
 Este proyecto integra automatizaciones con inteligencia artificial usando:
@@ -12,6 +35,7 @@ Este proyecto integra automatizaciones con inteligencia artificial usando:
 - Contenerización profesional con Docker
 
 ---
+
 
 ## 📁 Estructura del Repositorio
 
