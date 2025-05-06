@@ -1,12 +1,11 @@
 from openai import OpenAI
 import os
-import logging
 from services.db import guardar_resumen
 from typing import Dict, Any
+from core.logging import setup_logger
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_logger("services.tasks.summarize")
 
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))

@@ -6,13 +6,36 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import Optional  # Importa explícitamente los modelos necesarios
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Importamos los modelos de las tablas antes de ejecutar
+
+# Construye la URL con las variables de entorno que ya usas arriba
+SQLALCHEMY_DATABASE_URL = (
+    f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}"
+    f"@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT', 5432)}/{os.getenv('POSTGRES_DB')}"
+)
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
+
+# SessionLocal se reutiliza donde quieras (incluido FastAPI)
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+
+
+def get_db_session() -> Session:
+    """
+    Devuelve una sesión SQLAlchemy y la cierra automáticamente.
+    health.py la usa para lanzar «SELECT 1».
+    """
+    db = SessionLocal()
+    try:
+        return db
+    finally:
+        db.close()
 
 
 @contextmanager

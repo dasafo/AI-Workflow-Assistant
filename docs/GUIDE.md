@@ -14,10 +14,14 @@
     - [🧠 FASE 3: Plugins de IA](#-fase-3-plugins-de-ia)
     - [📦 FASE 4: Arquitectura profesional](#-fase-4-arquitectura-profesional)
     - [🧪 FASE 5: Calidad y preparación para portafolio](#-fase-5-calidad-y-preparación-para-portafolio)
+  - [🏗️ Arquitectura del Sistema](#️-arquitectura-del-sistema)
+    - [Core Components](#core-components)
+    - [Características Implementadas](#características-implementadas)
   - [🔄 Comandos útiles](#-comandos-útiles)
   - [🧪 Test del backend con curl](#-test-del-backend-con-curl)
   - [✨ Recursos útiles](#-recursos-útiles)
   - [📌 Autor](#-autor)
+  - [🛠️ Comandos de Desarrollo](#️-comandos-de-desarrollo)
 
 ---
 
@@ -41,35 +45,31 @@ Este proyecto integra automatizaciones con inteligencia artificial usando:
 
 ```bash
 AI-Workflow-Assistant/
-├── backend/                   # Backend en FastAPI actuando como MCP Host
-│   ├── api/                  # Rutas principales de la API REST (router MCP, etc.)
-│   │   ├── __init__.py
+├── backend/
+│   ├── api/
 │   │   └── routes/
-│   │       └── router.py     # Contiene los endpoints `/mcp/invoke` y `/mcp/telegram`
-│   ├── core/                 # Schemas y estructuras de entrada/salida MCP
-│   │   └── schemas.py
-│   ├── services/             # Lógica de backend (tareas IA y persistencia)
-│   │   ├── db.py             # Guardado de resúmenes en PostgreSQL
+│   │       ├── __init__.py
+│   │       └── router.py     # Endpoint unificado `/mcp/invoke`
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── schemas.py       # Schemas Pydantic (Input/Output Messages)
+│   │   ├── models.py        # Modelos SQLAlchemy
+│   │   ├── logging.py       # Configuración centralizada de logs
+│   │   └── health.py        # Health checks unificados
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── db.py
 │   │   └── tasks/
+│   │       ├── __init__.py
 │   │       ├── summarize.py
 │   │       ├── translate.py
 │   │       └── classify.py
-│   ├── models/               # (Reservado para futuras integraciones)
-│   ├── plugins/              # (Reservado para futuros conectores IA)
-│   ├── main.py               # Punto de entrada principal
+│   ├── main.py
 │   └── requirements.txt
-│
-├── n8n-flows/                # Flujos exportados de n8n (en formato JSON)
-│
 ├── docs/
-│   └── GUIDE.md              # Guía de desarrollo del proyecto (esta misma hoja de ruta)
-│
-├── docker-compose.yml        # Orquestación del backend, PostgreSQL y n8n con Docker
-├── Makefile
-├── .env
-├── .env.example
-├── .gitignore
-└── README.md                 # Descripción general del proyecto
+│   ├── GUIDE.md
+│   └── workflow.md          # Documentación técnica
+└── ... existing files ...
 ```
 
 
@@ -137,12 +137,13 @@ Se incluye un `Makefile` para automatizar tareas de desarrollo y testing:
 ### 📦 FASE 4: Arquitectura profesional
 - [x] Dockerizar backend + postgree en `docker-compose.yml`
 - [x] Estructura modular profesional (con /api, /services, /core)
-- [x] Habilitar logging y trazabilidad (logs de llamadas, errores)
-- [ ] Añadir autenticación (token simple o JWT)
+- [x] Habilitar logging y trazabilidad centralizada
+- [x] Añadir health checks unificados
 - [x] Persistencia con PostgreSQL
 - [x] Documentación OpenAPI en `/docs`
-- [ ] Endpoint GET para consultar resúmenes guardados
 - [x] Seguridad con API Key en el backend
+- [ ] Autenticación JWT (pendiente)
+- [ ] Endpoint GET para consultar histórico
 
 ---
 
@@ -152,6 +153,35 @@ Se incluye un `Makefile` para automatizar tareas de desarrollo y testing:
 - [x] README completo con descripción, arquitectura, instrucciones de uso
 - [ ] Despliegue real en dominio propio (por ejemplo: `assistant.dasafodata.com`)
 - [ ] Preparar presentación en LinkedIn y demo pública
+
+---
+
+## 🏗️ Arquitectura del Sistema
+
+### Core Components
+1. **API Layer** (`/api/routes/`)
+   - Endpoint unificado MCP
+   - Validación de API keys
+   - Manejo de errores centralizado
+
+2. **Core Layer** (`/core/`)
+   - Schemas de datos (Pydantic)
+   - Logging centralizado
+   - Health checks
+   - Modelos de base de datos
+
+3. **Services Layer** (`/services/`)
+   - Tareas de IA
+   - Persistencia
+   - Lógica de negocio
+
+### Características Implementadas
+- Logging centralizado y consistente
+- Health checks unificados
+- Variables de entorno centralizadas
+- Seguridad básica con API keys
+- Schemas validados con Pydantic
+- Persistencia en PostgreSQL
 
 ---
 
@@ -197,4 +227,27 @@ curl -X POST https://<tu_ngrok>.ngrok-free.app/mcp/invoke \
 
 ## 📌 Autor
 David – dasafodata | Zaragoza, España  
-Contacto: [dasafodata.com](https://dasafodata.com)  
+Contacto: [dasafodata.com](https://dasafodata.com)
+
+---
+
+## 🛠️ Comandos de Desarrollo
+
+```bash
+# Inicializar proyecto
+cp .env.example .env
+make build
+
+# Desarrollo
+make up           # Iniciar servicios
+make logs        # Ver logs
+make ps          # Estado de contenedores
+
+# Testing
+make test        # Ejecutar tests
+make health-check # Verificar estado
+
+# Database
+make db          # Acceder a PostgreSQL
+make reset-db    # Reset DB (⚠️ cuidado)
+```

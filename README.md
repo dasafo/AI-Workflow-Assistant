@@ -29,8 +29,10 @@
 graph TD
     A[Cliente/Telegram] --> B[n8n]
     B --> C[FastAPI Backend]
-    C --> D[OpenAI]
+    C --> D[OpenAI API]
     C --> E[(PostgreSQL)]
+    C --> F[Health Checks]
+    C --> G[Logging]
 ```
 
 ## 🚀 Inicio Rápido
@@ -100,11 +102,35 @@ curl -X POST http://localhost:8000/api/v1/mcp/invoke \
 AI-Workflow-Assistant/
 ├── backend/
 │   ├── api/          # Endpoints y rutas
-│   ├── core/         # Schemas y configuración
-│   └── services/     # Lógica de negocio y tareas
-├── n8n-flows/        # Flujos de n8n exportados
-└── docker/           # Configuración de contenedores
+│   │   └── routes/
+│   │       └── router.py
+│   ├── core/         # Componentes centrales
+│   │   ├── schemas.py   # Modelos Pydantic
+│   │   ├── models.py    # Modelos SQLAlchemy
+│   │   ├── logging.py   # Logging centralizado
+│   │   └── health.py    # Health checks
+│   └── services/     # Lógica de negocio
+│       ├── db.py
+│       └── tasks/    # Servicios de IA
+├── n8n-flows/       # Flujos de n8n
+└── docker/         # Config Docker
 ```
+
+## 🔄 Flujo de Trabajo
+1. Usuario envía comando al bot de Telegram
+2. n8n procesa y valida el comando
+3. Backend autentica y procesa con IA
+4. Resultado se guarda en PostgreSQL
+5. Respuesta retorna al usuario
+
+## 🛡️ Características de Seguridad
+- API Key validation
+- Logging centralizado
+- Health checks unificados
+- Variables de entorno centralizadas
+- Usuario no-root en contenedores
+- HTTPS para webhooks
+- Autenticación básica en n8n
 
 ## 🤖 Comandos de Telegram
 

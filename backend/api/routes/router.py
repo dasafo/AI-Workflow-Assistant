@@ -1,15 +1,12 @@
 from fastapi import APIRouter, Header, HTTPException
 from core.schemas import InputMessage, OutputMessage
-import os
-import logging
+from core.logging import setup_logger
 from services.tasks import summarize, translate, classify
-from services.db import guardar_resumen, guardar_traduccion, guardar_clasificacion
+import os
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = setup_logger("api.router")
 
-router = APIRouter()  # Asegúrate de que esta línea esté presente
+router = APIRouter()
 
 TASKS = {
     "summarize": summarize.run,
@@ -34,7 +31,7 @@ async def mcp_invoke(
     input_message: InputMessage, x_api_key: str = Header(default=None)
 ):
     """
-    Execute AI task through API
+    Unified endpoint for all AI tasks
     """
     validate_api_key(x_api_key)
 
@@ -46,31 +43,11 @@ async def mcp_invoke(
         return OutputMessage(success=False, result=None, error=f"Unknown task: {task}")
 
     try:
-        logger.info(
-            f"Processing task: {task} from source: {input_message.context.source if input_message.context else 'unknown'}"
+        logger.info(f"Processing task: {task}")
+        result = handler(
+            input_message.input,
+            input_message.context.dict() if input_message.context else {},
         )
-
-        # Convert Pydantic model to dict if context exists
-        context_dict = input_message.context.dict() if input_message.context else {}
-        result = handler(input_message.input, context_dict)
-
-        # Store in database based on task type
-        try:
-            user_id = context_dict.get("user_id", "unknown")
-            text = input_message.input.get("text", "")
-
-            if task == "summarize":
-                guardar_resumen(user_id, text, result.get("summary", ""))
-            elif task == "translate":
-                guardar_traduccion(user_id, text, result.get("translation", ""))
-            elif task == "classify":
-                guardar_clasificacion(user_id, text, result.get("label", ""))
-            logger.info(f"Task {task} result saved to database")
-        except Exception as db_error:
-            logger.error(f"Database error: {str(db_error)}")
-            # Continue even if database storage fails
-
-        logger.info(f"Task {task} completed successfully")
         return OutputMessage(success=True, result=result, error=None)
     except Exception as e:
         logger.error(f"Error processing task {task}: {str(e)}")

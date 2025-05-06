@@ -6,12 +6,10 @@ LABEL maintainer="David" \
       description="AI Personal Workflow Assistant Backend" \
       version="1.0.0"
 
-# Set environment variables first
+# Set essential environment variables only
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    POETRY_VERSION=1.4.2 \
-    PORT=8000 \
-    PYTHONPATH=/app
+    PORT=8000
 
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
@@ -46,9 +44,7 @@ USER appuser
 # Expose port
 EXPOSE $PORT
 
-# Health check with correct path
-HEALTHCHECK --interval=30s --timeout=3s \
-    CMD curl -f http://localhost:$PORT/health || exit 1
+# Eliminamos el HEALTHCHECK de aquí ya que lo manejamos en docker-compose
 
 # Start application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

@@ -1,33 +1,17 @@
 from fastapi import FastAPI
-from api.routes.router import router  # Cambia la importación
-import logging
-from services.database import Base, engine
-from services import models  # importa para registrar Resumen, etc.
+from api.routes.router import router
+from core.health import check_services
+from core.logging import setup_logger
 
-Base.metadata.create_all(bind=engine)  # crea las tablas
+logger = setup_logger("main")
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Initialize FastAPI app
-app = FastAPI(
-    title="AI Workflow Assistant",
-    description="API para procesar tareas de IA",
-    version="1.0.0",
-)
-
-Base.metadata.create_all(bind=engine)
+app = FastAPI()
 
 
 @app.get("/health")
 async def health_check():
-    """Endpoint para verificar la salud del servicio"""
-    return {
-        "status": "healthy",
-        "service": "AI Workflow Assistant",
-        "version": "1.0.0",
-    }
+    """Health check endpoint"""
+    return await check_services()
 
 
 # Include API routes

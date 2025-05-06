@@ -2,15 +2,10 @@ services:
   backend:
     build: 
       context: ./backend
-      dockerfile: Dockerfile
     container_name: ai-workflow-backend
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-    volumes:
-      - ./backend:/app
+    env_file: .env
     ports:
-      - "8000:8000"
-    env_file:
-      - .env
+      - "${PORT}:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -29,9 +24,7 @@ services:
   postgres:
     image: postgres:14-alpine
     container_name: ai-workflow-db
-    restart: unless-stopped
-    env_file:
-      - .env
+    env_file: .env
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -52,10 +45,9 @@ services:
   n8n:
     image: n8nio/n8n:latest
     container_name: ai-workflow-n8n
+    env_file: .env
     ports:
       - "${N8N_PORT}:5678"
-    env_file:
-      - .env
     environment:
       - N8N_HOST=${N8N_HOST}
       - N8N_PROTOCOL=${N8N_PROTOCOL}

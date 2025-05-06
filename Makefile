@@ -11,7 +11,7 @@ N8N_URL = http://localhost:5678
 # === Comandos básicos ===
 
 ## Levanta todos los servicios con Docker Compose
-up:
+up: check-env
 	$(DOCKER_COMPOSE) up -d
 
 ## Detiene todos los servicios
@@ -19,8 +19,8 @@ down:
 	$(DOCKER_COMPOSE) down
 
 ## Reconstruye la imagen del backend
-build:
-	$(DOCKER_COMPOSE) build backend
+build: check-env
+	$(DOCKER_COMPOSE) build
 
 ## Muestra los logs del backend
 logs:
@@ -109,4 +109,12 @@ ngrok-telegram:
 	URL_FINAL=$$(echo $$URL_LOCAL | sed "s|http://localhost:5678|$$NGROK_URL|"); \
 	echo "🚀 Registrando webhook: $$URL_FINAL"; \
 	curl -s $$URL_FINAL && echo "\n✅ Webhook registrado" || echo "\n❌ Error"
+
+check-env:
+	@if [ ! -f .env ]; then \
+	    echo "❌ Error: .env file not found"; \
+	    echo "💡 Tip: Copy .env.example to .env and fill in your values"; \
+	    exit 1; \
+	fi
+	@echo "✅ .env file exists"
 

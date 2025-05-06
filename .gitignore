@@ -9,8 +9,9 @@ dist/
 build/
 
 # Entornos y Variables
+# Environment variables
 .env
-.env.*
+*.env
 !.env.example
 .venv/
 venv/
