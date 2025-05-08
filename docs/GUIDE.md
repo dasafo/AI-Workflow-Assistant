@@ -27,6 +27,10 @@
     - [Optimización de Docker](#optimización-de-docker)
     - [Asincronía completa](#asincronía-completa)
     - [Manejo de errores y reintentos](#manejo-de-errores-y-reintentos)
+    - [Optimización de base de datos PostgreSQL](#optimización-de-base-de-datos-postgresql)
+      - [Implementación de índices](#implementación-de-índices)
+      - [Configuración del pool de conexiones](#configuración-del-pool-de-conexiones)
+      - [Optimizaciones adicionales](#optimizaciones-adicionales)
   - [🔧 Troubleshooting](#-troubleshooting)
     - [Problemas Comunes](#problemas-comunes)
   - [🚀 Guía de Producción](#-guía-de-producción)
@@ -384,6 +388,71 @@ OPENAI_MAX_RETRIES=3         # Número máximo de reintentos
 OPENAI_RETRY_DELAY_BASE=1.0  # Retraso base (segundos)
 OPENAI_RETRY_DELAY_MAX=10.0  # Retraso máximo (segundos)
 OPENAI_RETRY_JITTER=0.1      # Factor de aleatoriedad
+```
+
+### Optimización de base de datos PostgreSQL
+
+#### Implementación de índices
+
+La aplicación utiliza índices estratégicos para mejorar significativamente el rendimiento de consultas frecuentes:
+
+```sql
+-- Índice para búsquedas por user_id (muy común en filtros)
+CREATE INDEX idx_translations_user_id ON translations(user_id);
+
+-- Índice para búsquedas por fecha (para reportes y análisis)
+CREATE INDEX idx_summaries_created_at ON summaries(created_at);
+
+-- Índice compuesto para búsquedas combinadas
+CREATE INDEX idx_classifications_user_type ON classifications(user_id, content_type);
+
+-- Índice de texto para búsquedas en contenido
+CREATE INDEX idx_content_search ON summaries USING gin(to_tsvector('spanish', content));
+```
+
+Estos índices se aplican automáticamente durante la inicialización de la base de datos mediante los scripts de migración en `./backend/migrations`.
+
+#### Configuración del pool de conexiones
+
+El sistema implementa un pool de conexiones optimizado para equilibrar rendimiento y recursos:
+
+```python
+# En backend/services/db.py
+async def get_db_pool():
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=False,
+        pool_size=20,               # Tamaño base del pool
+        max_overflow=10,            # Conexiones adicionales permitidas
+        pool_timeout=30,            # Tiempo de espera para obtener conexión
+        pool_recycle=1800,          # Reciclar conexiones cada 30 min
+        pool_pre_ping=True,         # Verificar conexiones antes de usarlas
+        pool_use_lifo=True,         # Estrategia LIFO para mejor reutilización
+    )
+    return engine
+```
+
+Para configurar estos parámetros según tus necesidades, ajusta las siguientes variables en `.env`:
+
+```bash
+# Configuración pool de PostgreSQL
+POSTGRES_POOL_SIZE=20
+POSTGRES_MAX_OVERFLOW=10
+POSTGRES_POOL_TIMEOUT=30
+POSTGRES_POOL_RECYCLE=1800
+```
+
+#### Optimizaciones adicionales
+
+- **Vacuum automático**: Configurado para ejecutarse periódicamente y mantener la base de datos optimizada
+- **Statement timeout**: Limita la duración máxima de consultas para evitar bloqueos prolongados
+- **Particionamiento**: Para tablas que crecen significativamente (implementado en `summaries` por fecha)
+
+Para aplicar estas optimizaciones en un entorno de producción, utiliza:
+
+```bash
+# Aplicar optimizaciones de PostgreSQL
+make optimize-db
 ```
 
 ## 🔧 Troubleshooting

@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 import asyncpg
 from services.models import Clasificacion, Resumen, Traduccion, Base
 from core.logging import setup_logger
+from pathlib import Path
 
 # Configure logging
 logger = setup_logger("services.db")
@@ -20,14 +21,28 @@ POSTGRES_HOST = os.getenv("POSTGRES_HOST", "postgres")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT", 5432)
 POSTGRES_DB = os.getenv("POSTGRES_DB")
 
+# Configuración del pool de conexiones desde variables de entorno
+POSTGRES_POOL_SIZE = int(os.getenv("POSTGRES_POOL_SIZE", "20"))
+POSTGRES_MAX_OVERFLOW = int(os.getenv("POSTGRES_MAX_OVERFLOW", "10"))
+POSTGRES_POOL_TIMEOUT = float(os.getenv("POSTGRES_POOL_TIMEOUT", "30"))
+POSTGRES_POOL_RECYCLE = int(os.getenv("POSTGRES_POOL_RECYCLE", "1800"))
+
+
 SQLALCHEMY_DATABASE_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 
-# Motor asíncrono con SQLAlchemy 2.0
+
+# Motor asíncrono con SQLAlchemy 2.0 y configuración optimizada del pool
 engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
-    pool_pre_ping=True,
     echo=False,
-)
+    pool_size=POSTGRES_POOL_SIZE,  # Tamaño base del pool
+    max_overflow=POSTGRES_MAX_OVERFLOW,  # Conexiones adicionales permitidas
+    pool_timeout=POSTGRES_POOL_TIMEOUT,  # Tiempo de espera para obtener conexión
+    pool_recycle=POSTGRES_POOL_RECYCLE,  # Reciclar conexiones cada 30 min
+    pool_pre_ping=True,  # Verificar conexiones antes de usarlas
+    pool_use_lifo=True,  # Estrategia LIFO para mejor reutilización
+)  # Motor asíncrono con SQLAlchemy 2.0
+
 
 # Creador de sesiones asíncronas
 AsyncSessionLocal = async_sessionmaker(
@@ -151,8 +166,36 @@ async def guardar_clasificacion(user_id: str, texto: str, clasificacion: str) ->
         raise
 
 
+async def apply_migrations(db_session):
+    """Aplica scripts de migración para optimizar la base de datos"""
+    try:
+        migration_dir = Path("backend/migrations")
+        if migration_dir.exists():
+            for script_file in sorted(migration_dir.glob("*.sql")):
+                with open(script_file, "r") as f:
+                    sql_script = f.read()
+
+                # Reemplazar variables
+                sql_script = sql_script.replace(
+                    "${POSTGRES_DB}", os.getenv("POSTGRES_DB")
+                )
+
+                # Ejecutar script
+                await db_session.execute(sql_script)
+                logger.info(f"Aplicada migración: {script_file.name}")
+
+            await db_session.commit()
+            logger.info("Todas las migraciones aplicadas con éxito")
+    except Exception as e:
+        logger.error(f"Error aplicando migraciones: {e}")
+        await db_session.rollback()
+        raise
+
+
 # Para iniciar la BD en el arranque de la aplicación
 async def startup_db_init():
     """Inicializa la base de datos al iniciar la aplicación"""
     await init_db()
-    logger.info("Inicialización de base de datos completada")
+    async with AsyncSessionLocal() as session:
+        await apply_migrations(session)
+    logger.info("Inicialización de base de datos y migraciones completadas")
