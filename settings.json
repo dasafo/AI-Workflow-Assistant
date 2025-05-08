@@ -1,0 +1,68 @@
+{
+    "workbench.colorTheme": "Atom One Dark",
+    "git.enableSmartCommit": true,
+    "editor.minimap.enabled": false,
+    "python.createEnvironment.trigger": "off",
+    "workbench.editorAssociations": {
+        "*.sqlite3": "default"
+    },
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    "workbench.statusBar.visible": false,
+    "terminal.integrated.inheritEnv": false,
+    "mcp": {
+        "servers": {
+            "playwright": {
+                "command": "npx",
+                "args": [
+                    "@playwright/mcp@latest"
+                ]
+            },
+            "Context7": {
+                "type": "stdio",
+                "command": "npx",
+                "args": [
+                    "-y",
+                    "@upstash/context7-mcp@latest"
+                ]
+            },
+            "n8n": {
+                "command": "npx",
+                "args": [
+                    "-y",
+                    "supergateway",
+                    "--sse",
+                    "https://n8n.dasafodata.com/mcp/2f5f82bc-c3c9-4f85-81ee-ba7b0ea30f08/sse"
+                ]
+            },
+            "filesystem": {
+                "command": "npx",
+                "args": [
+                    "-y",
+                    "@modelcontextprotocol/server-filesystem",
+                    "/home/david/Documents/AI"
+                ]
+            },
+            "postgres": {
+                "command": "npx",
+                "args": [
+                    "-y",
+                    "@modelcontextprotocol/server-postgres",
+                    "postgresql://postgres:freedom85@localhost:5432/curso_bbdd"
+                ]
+            }
+        }
+    },
+    "explorer.confirmDelete": false,
+    "workbench.iconTheme": "material-icon-theme",
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "jupyter.interactiveWindow.textEditor.executeSelection": true,
+    "docker.extension.dockerEngineAvailabilityPrompt": false,
+    "makefile.configureOnOpen": true,
+    "cursor.cpp.disabledLanguages": [
+        "plaintext",
+        "markdown",
+        "scminput"
+    ]
+}

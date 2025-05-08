@@ -11,6 +11,9 @@
 - 📊 Persistencia en PostgreSQL
 - 🔐 Seguridad y autenticación
 - 🐳 Containerización completa
+- 🚀 Sistema de caché con Redis
+- 🔧 Imágenes Docker optimizadas (Alpine + Multi-stage)
+- ⚡ Backend asíncrono de alto rendimiento
 
 ## 🛠️ Stack Tecnológico
 
@@ -20,6 +23,7 @@
 | n8n | latest | Orquestación de workflows y bot Telegram |
 | PostgreSQL | 14-alpine | Persistencia y trazabilidad |
 | OpenAI | gpt-4o-mini-2024-07-18 | Motor de procesamiento IA |
+| Redis | alpine | Sistema de caché para optimizar respuestas |
 | Docker | 24.0+ | Containerización y orquestación |
 | Python | 3.11 | Lenguaje base del backend |
 
@@ -33,6 +37,7 @@ graph TD
     C --> E[(PostgreSQL)]
     C --> F[Health Checks]
     C --> G[Logging]
+    C --> H[(Redis Cache)]
 ```
 
 ## 🚀 Inicio Rápido
@@ -59,6 +64,7 @@ nano .env
 # - API_KEY: Clave para autenticación
 # - OPENAI_API_KEY: Clave de API de OpenAI
 # - POSTGRES_*: Configuración de base de datos
+# - REDIS_*: Configuración de caché (host, port, ttl)
 # - N8N_*: Configuración de n8n y webhooks
 ```
 
@@ -108,6 +114,7 @@ AI-Workflow-Assistant/
 │   │   ├── schemas.py   # Modelos Pydantic
 │   │   ├── models.py    # Modelos SQLAlchemy
 │   │   ├── logging.py   # Logging centralizado
+│   │   ├── cache.py     # Sistema de caché con Redis
 │   │   └── health.py    # Health checks
 │   └── services/     # Lógica de negocio
 │       ├── db.py

@@ -1,6 +1,8 @@
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from sqlalchemy.sql import func
-from services.database import Base  # o from db import Base, si estás en el mismo nivel
+
+Base = declarative_base()
 
 
 class Resumen(Base):
@@ -24,8 +26,17 @@ class Traduccion(Base):
 
 class Clasificacion(Base):
     __tablename__ = "clasificaciones"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, nullable=False)
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(String(50), nullable=False)
     texto = Column(Text, nullable=False)
-    etiqueta = Column(String, nullable=False)
-    fecha = Column(DateTime, default=func.now())
+    clasificacion = Column(
+        String(100), nullable=False
+    )  # Changed from 'tipo' to 'clasificacion'
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    def __repr__(self):
+        return f"<Clasificacion(user_id={self.user_id}, clasificacion={self.clasificacion})>"
+
+
+__all__ = ["Base", "Resumen", "Traduccion", "Clasificacion"]

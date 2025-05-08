@@ -20,7 +20,11 @@ down:
 
 ## Reconstruye la imagen del backend
 build: check-env
-	$(DOCKER_COMPOSE) build
+	$(DOCKER_COMPOSE) build --no-cache backend
+
+## Reconstruye todas las imágenes (incluye backend con optimizaciones)
+build-all: check-env
+	$(DOCKER_COMPOSE) build --no-cache
 
 ## Muestra los logs del backend
 logs:
@@ -93,6 +97,14 @@ help:
 	@echo "🧠 AI Personal Workflow Assistant"
 	@echo "\nComandos disponibles:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' Makefile | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[1;32m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo "\n  Comandos principales:"
+	@echo "  \033[1;32mup                   \033[0m Inicia todos los servicios"
+	@echo "  \033[1;32mdown                 \033[0m Detiene los servicios"
+	@echo "  \033[1;32mbuild                \033[0m Reconstruye la imagen del backend"
+	@echo "  \033[1;32mbuild-all            \033[0m Reconstruye todas las imágenes"
+	@echo "  \033[1;32mlogs                 \033[0m Muestra logs del backend"
+	@echo "  \033[1;32mrestart              \033[0m Reinicia los servicios"
+	@echo "  \033[1;32mps                   \033[0m Lista contenedores activos"
 
 # === Integraciones ===
 ngrok-telegram:

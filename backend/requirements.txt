@@ -4,9 +4,14 @@ uvicorn[standard]>=0.24.0
 pydantic>=2.5.0
 
 # Base de datos
-psycopg2-binary>=2.9.9
-sqlalchemy>=2.0
-alembic>=1.12.1
+asyncpg>=0.28.0           # Driver de PostgreSQL asíncrono
+psycopg2-binary>=2.9.9    # Para compatibilidad con código síncrono
+sqlalchemy>=2.0           # SQLAlchemy 2.0 con soporte asíncrono
+alembic>=1.12.1           # Migraciones
+
+# Cache
+redis>=5.0.1
+cachetools>=5.3.0
 
 # IA y procesamiento
 openai>=1.0.0
@@ -14,6 +19,7 @@ python-dotenv>=1.0.0
 
 # Utilidades
 python-jose[cryptography]>=3.3.0  # Para JWT si lo necesitamos
-requests>=2.31.0  # Para health checks
-python-multipart>=0.0.6  # Para form-data
+requests>=2.31.0                 # Para health checks
+python-multipart>=0.0.6          # Para form-data
 typing-extensions>=4.8.0
+httpx>=0.24.1                    # Cliente HTTP asíncrono para OpenAI

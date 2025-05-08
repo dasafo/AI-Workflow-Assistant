@@ -22,6 +22,20 @@
   - [✨ Recursos útiles](#-recursos-útiles)
   - [📌 Autor](#-autor)
   - [🛠️ Comandos de Desarrollo](#️-comandos-de-desarrollo)
+  - [🚀 Optimización de rendimiento](#-optimización-de-rendimiento)
+    - [Sistema de caché con Redis](#sistema-de-caché-con-redis)
+    - [Optimización de Docker](#optimización-de-docker)
+    - [Asincronía completa](#asincronía-completa)
+    - [Manejo de errores y reintentos](#manejo-de-errores-y-reintentos)
+  - [🔧 Troubleshooting](#-troubleshooting)
+    - [Problemas Comunes](#problemas-comunes)
+  - [🚀 Guía de Producción](#-guía-de-producción)
+    - [Requisitos de Sistema](#requisitos-de-sistema)
+    - [Configuración de SSL](#configuración-de-ssl)
+    - [Backup y Recuperación](#backup-y-recuperación)
+  - [📊 Monitoreo](#-monitoreo)
+    - [Métricas Clave](#métricas-clave)
+    - [Herramientas Recomendadas](#herramientas-recomendadas)
 
 ---
 
@@ -50,12 +64,14 @@ AI-Workflow-Assistant/
 │   │   └── routes/
 │   │       ├── __init__.py
 │   │       └── router.py     # Endpoint unificado `/mcp/invoke`
+│   │   
 │   ├── core/
 │   │   ├── __init__.py
 │   │   ├── schemas.py       # Schemas Pydantic (Input/Output Messages)
 │   │   ├── models.py        # Modelos SQLAlchemy
 │   │   ├── logging.py       # Configuración centralizada de logs
 │   │   └── health.py        # Health checks unificados
+│   │   └── cache.py         # cache con remis
 │   ├── services/
 │   │   ├── __init__.py
 │   │   ├── db.py
@@ -251,3 +267,163 @@ make health-check # Verificar estado
 make db          # Acceder a PostgreSQL
 make reset-db    # Reset DB (⚠️ cuidado)
 ```
+
+## 🚀 Optimización de rendimiento
+
+### Sistema de caché con Redis
+
+El proyecto ahora incluye un sistema de caché utilizando Redis para optimizar las consultas frecuentes a la API de OpenAI:
+
+- **Reducción de costos**: Al cachear respuestas similares, se reduce el número de llamadas a la API.
+- **Mejora de velocidad**: Las respuestas cacheadas se entregan instantáneamente, sin esperar a la API.
+- **Configuración flexible**: Tiempos de vida (TTL) configurables por cada tipo de tarea.
+
+Para configurar el sistema de caché, ajusta las siguientes variables en tu archivo `.env`:
+
+```bash
+# Redis - Sistema de caché
+REDIS_HOST=redis           # Host del servidor Redis
+REDIS_PORT=6379            # Puerto de Redis
+REDIS_DB=0                 # Base de datos Redis
+REDIS_CACHE_TTL=86400      # TTL general (24h)
+SUMMARY_CACHE_TTL=86400    # TTL para resúmenes
+TRANSLATION_CACHE_TTL=86400  # TTL para traducciones
+CLASSIFICATION_CACHE_TTL=86400  # TTL para clasificaciones
+```
+
+Para limpiar la caché en casos necesarios, puedes añadir un nuevo endpoint en el futuro o reiniciar el contenedor de Redis:
+
+```bash
+# Reiniciar sólo Redis
+docker restart ai-workflow-redis
+```
+
+### Optimización de Docker
+
+El proyecto ahora utiliza una imagen Docker más eficiente y ligera mediante:
+
+- **Multi-stage builds**: Separamos la fase de compilación de la imagen final para reducir el tamaño.
+- **Alpine como base**: Usamos Alpine Linux para una imagen más pequeña (aprox. 70% de reducción).
+- **Wheels pre-compilados**: Las dependencias se compilan en la primera fase y solo se instalan los binarios en la imagen final.
+
+Beneficios de estas optimizaciones:
+
+- **Menor tamaño de imagen**: De ~1GB con slim a ~300MB con Alpine y multi-stage.
+- **Despliegue más rápido**: Menor tiempo de descarga y arranque de contenedores.
+- **Mayor seguridad**: Superficie de ataque reducida al incluir menos componentes.
+
+Para reconstruir la imagen con estas optimizaciones:
+
+```bash
+# Reconstruir la imagen del backend
+make build
+
+# O manualmente
+docker-compose build backend
+```
+
+### Asincronía completa
+
+El backend ahora implementa asincronía completa en todos sus componentes:
+
+- **SQLAlchemy 2.0 Async**: Conexiones asíncronas a base de datos para mejor rendimiento.
+- **AsyncOpenAI**: Cliente asíncrono para las llamadas a la API de OpenAI.
+- **Operaciones asíncronas**: Todas las operaciones de I/O son asíncronas (DB, API, caché).
+
+Beneficios de la asincronía:
+
+- **Mayor concurrencia**: Permite manejar múltiples solicitudes simultáneas sin bloquear hilos.
+- **Mejor rendimiento**: Aprovecha eficientemente los tiempos de espera de I/O.
+- **Escalabilidad**: La aplicación puede manejar más carga con los mismos recursos.
+
+Para entender el modelo asíncrono, observa cómo se definen y utilizan las funciones:
+
+```python
+# Ejemplo de función asíncrona
+@cache_response(ttl=86400)
+async def run(input: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+    response = await client.chat.completions.create(...)
+    await guardar_resumen(...)
+    return {...}
+```
+
+Todos los endpoints ahora son asíncronos, lo que mejora significativamente el rendimiento general de la aplicación.
+
+### Manejo de errores y reintentos
+
+El sistema ahora incluye un manejo de errores robusto y un mecanismo de reintentos automáticos:
+
+- **Errores estructurados**: Sistema de errores estandarizado con códigos, mensajes descriptivos y detalles.
+- **Reintentos automáticos**: Las llamadas a OpenAI se reintentan automáticamente ante fallos temporales.
+- **Backoff exponencial**: Tiempo creciente entre reintentos para evitar sobrecargar servicios externos.
+- **Jitter aleatorio**: Previene tormentas de reintentos sincronizados en entornos multiusuario.
+
+El sistema de reintentos se implementa mediante un decorador que se puede aplicar a cualquier función asíncrona:
+
+```python
+@with_retry
+async def call_openai_with_retry(text: str):
+    # Esta función se reintentará automáticamente si falla
+    response = await client.chat.completions.create(...)
+    return response
+```
+
+Beneficios del sistema de errores y reintentos:
+
+- **Mayor fiabilidad**: El sistema es resiliente ante fallos temporales de red o servicios.
+- **Mejor diagnóstico**: Los errores incluyen códigos estandarizados y detalles para facilitar la solución.
+- **Mensajes coherentes**: Los usuarios reciben información clara sobre los problemas.
+- **Logs mejorados**: Cada error se registra con su código, mensaje y stack trace para facilitar depuración.
+
+Para configurar los reintentos, ajusta estas variables en el `.env`:
+
+```bash
+# Configuración de reintentos
+OPENAI_TIMEOUT=30.0          # Timeout en segundos
+OPENAI_MAX_RETRIES=3         # Número máximo de reintentos
+OPENAI_RETRY_DELAY_BASE=1.0  # Retraso base (segundos)
+OPENAI_RETRY_DELAY_MAX=10.0  # Retraso máximo (segundos)
+OPENAI_RETRY_JITTER=0.1      # Factor de aleatoriedad
+```
+
+## 🔧 Troubleshooting
+
+### Problemas Comunes
+1. **Redis Port in Use**
+   ```bash
+   # Solución 1: Cambiar puerto
+   REDIS_PORT=6380
+   
+   # Solución 2: Detener Redis local
+   sudo service redis-server stop
+   ```
+
+2. **Database Connection Issues**
+   ...
+
+3. **API Key Problems**
+   ...
+
+## 🚀 Guía de Producción
+
+### Requisitos de Sistema
+- CPU: 2+ cores
+- RAM: 4GB mínimo
+- Disco: 20GB SSD
+
+### Configuración de SSL
+...
+
+### Backup y Recuperación
+...
+
+## 📊 Monitoreo
+
+### Métricas Clave
+- Latencia de API
+- Uso de CPU/RAM
+- Tasa de errores
+- Uso de caché
+
+### Herramientas Recomendadas
+...

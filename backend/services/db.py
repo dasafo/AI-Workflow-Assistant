@@ -1,141 +1,158 @@
 import os
 import logging
-import psycopg2
-from psycopg2.extras import DictCursor
-from contextlib import contextmanager
+from typing import AsyncGenerator
 from datetime import datetime
-from typing import Optional  # Importa explícitamente los modelos necesarios
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from typing import Optional
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy import select, insert, create_engine
+from sqlalchemy.orm import sessionmaker
+import asyncpg
+from services.models import Clasificacion, Resumen, Traduccion, Base
+from core.logging import setup_logger
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_logger("services.db")
 
-# Importamos los modelos de las tablas antes de ejecutar
+# Construye la URL para conexión asíncrona
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "postgres")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT", 5432)
+POSTGRES_DB = os.getenv("POSTGRES_DB")
 
-# Construye la URL con las variables de entorno que ya usas arriba
-SQLALCHEMY_DATABASE_URL = (
-    f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}"
-    f"@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT', 5432)}/{os.getenv('POSTGRES_DB')}"
+SQLALCHEMY_DATABASE_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+
+# Motor asíncrono con SQLAlchemy 2.0
+engine = create_async_engine(
+    SQLALCHEMY_DATABASE_URL,
+    pool_pre_ping=True,
+    echo=False,
 )
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
+# Creador de sesiones asíncronas
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    autocommit=False,
+    autoflush=False,
+    expire_on_commit=False,
+    class_=AsyncSession,
+)
 
-# SessionLocal se reutiliza donde quieras (incluido FastAPI)
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+
+# Inicialización asíncrona de tablas
+async def init_db():
+    """Inicializa la base de datos de forma asíncrona"""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Base de datos inicializada")
 
 
-def get_db_session() -> Session:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
-    Devuelve una sesión SQLAlchemy y la cierra automáticamente.
-    health.py la usa para lanzar «SELECT 1».
+    Proporciona una sesión de base de datos asíncrona
+
+    Yields:
+        AsyncSession: Sesión asíncrona de SQLAlchemy
     """
-    db = SessionLocal()
+    session = AsyncSessionLocal()
     try:
-        return db
+        yield session
     finally:
-        db.close()
+        await session.close()
 
 
-@contextmanager
-def get_db_connection():
+# Para compatibilidad con health checks síncronos
+def get_db_session():
     """
-    Context manager for database connections
-    Ensures proper handling of connections and automatic closing
+    Para compatibilidad con funciones síncronas (como health checks)
     """
-    conn = None
-    try:
-        conn = psycopg2.connect(
-            host=os.getenv("POSTGRES_HOST"),
-            dbname=os.getenv("POSTGRES_DB"),
-            user=os.getenv("POSTGRES_USER"),
-            password=os.getenv("POSTGRES_PASSWORD"),
-            port=os.getenv("POSTGRES_PORT", 5432),
-        )
-        yield conn
-    except psycopg2.Error as e:
-        logger.error(f"Database connection error: {str(e)}")
-        raise
-    finally:
-        if conn:
-            conn.close()
-            logger.debug("Database connection closed")
+    # Creamos una sesión síncrona para este propósito específico
+    sync_engine = create_engine(
+        f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}"
+        f"@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT', 5432)}/{os.getenv('POSTGRES_DB')}"
+    )
+    SessionLocal = sessionmaker(bind=sync_engine, autocommit=False, autoflush=False)
+    return SessionLocal()
 
 
-def guardar_resumen(user_id: str, texto_original: str, resumen: str) -> None:
+async def guardar_resumen(user_id: str, texto_original: str, resumen: str) -> None:
     """
-    Save summary to database
+    Guarda un resumen en la base de datos de forma asíncrona
+
     Args:
-        user_id: User identifier
-        texto_original: Original text
-        resumen: Generated summary
+        user_id: Identificador del usuario
+        texto_original: Texto original
+        resumen: Resumen generado
     """
     try:
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    INSERT INTO resumenes (user_id, texto_original, resumen, fecha)
-                    VALUES (%s, %s, %s, %s)
-                    """,
-                    (user_id, texto_original, resumen, datetime.utcnow()),
-                )
-                conn.commit()
-                logger.info(f"Resumen guardado para usuario {user_id}")
+        async with AsyncSessionLocal() as session:
+            nuevo_resumen = Resumen(
+                user_id=user_id,
+                texto_original=texto_original,
+                resumen=resumen,
+                fecha=datetime.utcnow(),
+            )
+            session.add(nuevo_resumen)
+            await session.commit()
+            logger.info(f"Resumen guardado para usuario {user_id}")
     except Exception as e:
         logger.error(f"Error al guardar resumen: {str(e)}")
         raise
 
 
-def guardar_traduccion(
-    user_id: str, texto_original: str, traduccion: str, idioma: str = "en"
+async def guardar_traduccion(
+    user_id: str, texto_original: str, idioma: str, traduccion: str
 ) -> None:
     """
-    Save translation to database
+    Guarda una traducción en la base de datos de forma asíncrona
+
     Args:
-        user_id: User identifier
-        texto_original: Original text
-        traduccion: Translated text
-        idioma: Target language code
+        user_id: Identificador del usuario
+        texto_original: Texto original
+        idioma: Código del idioma destino
+        traduccion: Texto traducido
     """
     try:
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    INSERT INTO traducciones (user_id, texto_original, traduccion, idioma, fecha)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (user_id, texto_original, traduccion, idioma, datetime.utcnow()),
-                )
-                conn.commit()
-                logger.info(f"Traducción guardada para usuario {user_id}")
+        async with AsyncSessionLocal() as session:
+            nueva_traduccion = Traduccion(
+                user_id=user_id,
+                texto_original=texto_original,
+                traduccion=traduccion,
+                idioma=idioma,
+                fecha=datetime.utcnow(),
+            )
+            session.add(nueva_traduccion)
+            await session.commit()
+            logger.info(f"Traducción guardada para usuario {user_id}")
     except Exception as e:
         logger.error(f"Error al guardar traducción: {str(e)}")
         raise
 
 
-def guardar_clasificacion(user_id: str, texto_original: str, etiqueta: str) -> None:
+async def guardar_clasificacion(user_id: str, texto: str, clasificacion: str) -> None:
     """
-    Save classification to database
+    Guarda una clasificación en la base de datos de forma asíncrona
+
     Args:
-        user_id: User identifier
-        texto_original: Original text
-        etiqueta: Classification label
+        user_id: Identificador del usuario
+        texto: Texto original
+        clasificacion: Resultado de la clasificación
     """
     try:
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    INSERT INTO clasificaciones (user_id, texto_original, etiqueta, fecha)
-                    VALUES (%s, %s, %s, %s)
-                    """,
-                    (user_id, texto_original, etiqueta, datetime.utcnow()),
-                )
-                conn.commit()
-                logger.info(f"Clasificación guardada para usuario {user_id}")
+        async with AsyncSessionLocal() as session:
+            nueva_clasificacion = Clasificacion(
+                user_id=user_id, texto=texto, clasificacion=clasificacion
+            )
+            session.add(nueva_clasificacion)
+            await session.commit()
+            logger.info(f"Clasificación guardada para usuario {user_id}")
     except Exception as e:
         logger.error(f"Error al guardar clasificación: {str(e)}")
         raise
+
+
+# Para iniciar la BD en el arranque de la aplicación
+async def startup_db_init():
+    """Inicializa la base de datos al iniciar la aplicación"""
+    await init_db()
+    logger.info("Inicialización de base de datos completada")
