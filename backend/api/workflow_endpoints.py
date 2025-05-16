@@ -294,6 +294,8 @@ Dado el siguiente mensaje del usuario, responde SOLO con un JSON que indique:
 - campo: si el usuario pide un campo específico (por ejemplo, "fecha"), si no, null
 - respuesta_esperada: "lista", "numero", "valor"
 - Si el usuario pide el primer, segundo, tercer, cuarto, etc. registro, incluye un campo "posicion" (base 1, es decir, 1=primero, 2=segundo, etc.)
+- Si el usuario pide el "antepenúltimo" registro, pon "posicion": -2; si pide el "penúltimo", pon "posicion": -1; si pide el "último", pon "posicion": -1.
+- Si el usuario pide el "registro número N", pon "posicion": N.
 
 Ejemplo: "cuántos registros se han clasificado"
 Respuesta: {{"accion": "contar", "tipo_tarea": "clasificar", "respuesta_esperada": "numero"}}
@@ -303,6 +305,15 @@ Respuesta: {{"accion": "campo_especifico", "tipo_tarea": "traducir", "limit": 1,
 
 Ejemplo: "dame la fecha del cuarto registro"
 Respuesta: {{"accion": "campo_especifico", "tipo_tarea": null, "limit": 4, "orden": "asc", "campo": "fecha", "posicion": 4, "respuesta_esperada": "valor"}}
+
+Ejemplo: "dame el tercer registro"
+Respuesta: {{"accion": "listar", "tipo_tarea": null, "limit": 3, "orden": "asc", "posicion": 3, "respuesta_esperada": "valor"}}
+
+Ejemplo: "dame el antepenúltimo registro"
+Respuesta: {{"accion": "listar", "tipo_tarea": null, "limit": 2, "orden": "desc", "posicion": -2, "respuesta_esperada": "valor"}}
+
+Ejemplo: "dame el registro número 15"
+Respuesta: {{"accion": "listar", "tipo_tarea": null, "limit": 15, "orden": "asc", "posicion": 15, "respuesta_esperada": "valor"}}
 
 Ejemplo: "dame los 3 últimos registros clasificados"
 Respuesta: {{"accion": "listar", "tipo_tarea": "clasificar", "limit": 3, "orden": "desc", "respuesta_esperada": "lista"}}
@@ -347,8 +358,26 @@ Mensaje del usuario: "{request.texto}"
             query = query.order_by(ConsultaIA.fecha.asc())
         else:
             query = query.order_by(desc(ConsultaIA.fecha))
-        if accion in ["listar", "campo_especifico"]:
+
+        # Si se pide un registro específico por posición y no es una lista
+        if (accion in ["listar", "campo_especifico"]) and data.get("posicion") and respuesta_esperada != "lista":
+            idx = data.get("posicion", 1)
+            if idx < 0:
+                # Para negativos, necesitamos saber el total
+                count_query = select(ConsultaIA).where(ConsultaIA.chat_id == request.chat_id)
+                if tipo_tarea:
+                    count_query = count_query.where(ConsultaIA.tipo_tarea == tipo_tarea)
+                total = (await db.execute(count_query)).scalars().all()
+                total_count = len(total)
+                idx = total_count + idx
+            else:
+                idx = idx - 1
+            if idx < 0:
+                return {"success": False, "mensaje": f"No hay un registro en la posición solicitada (índice negativo)"}
+            query = query.offset(idx).limit(1)
+        elif accion in ["listar", "campo_especifico"]:
             query = query.limit(limit)
+
         result = await db.execute(query)
         consultas = result.scalars().all()
 
@@ -364,18 +393,37 @@ Mensaje del usuario: "{request.texto}"
 
         # Acción: campo_especifico
         if accion == "campo_especifico" and campo and consultas:
-            idx = data.get("posicion", 1) - 1
-            if idx < 0 or idx >= len(consultas):
-                return {
-                    "success": False,
-                    "mensaje": f"No hay un registro en la posición solicitada (total: {len(consultas)})"
-                }
-            valor = getattr(consultas[idx], campo, None)
+            valor = getattr(consultas[0], campo, None)
             return {
                 "success": True,
                 "chat_id": request.chat_id,
                 campo: valor,
-                "mensaje": f"El campo '{campo}' del registro {idx+1} {'de tipo ' + tipo_tarea if tipo_tarea else ''} es: {valor}",
+                "mensaje": f"El campo '{campo}' del registro solicitado {'de tipo ' + tipo_tarea if tipo_tarea else ''} es: {valor}",
+            }
+        # Acción: listar con posición específica
+        if accion == "listar" and data.get("posicion") and consultas and respuesta_esperada != "lista":
+            item = consultas[0]
+            # Construir descripción de la posición
+            pos = data.get("posicion")
+            if pos == -1:
+                pos_desc = "penúltimo" if len(consultas) > 1 else "último"
+            elif pos == -2:
+                pos_desc = "antepenúltimo"
+            elif isinstance(pos, int) and pos > 0:
+                pos_desc = f"número {pos}"
+            else:
+                pos_desc = str(pos)
+            return {
+                "success": True,
+                "chat_id": request.chat_id,
+                "registro": ConsultaItem(
+                    id=item.id,
+                    tipo_tarea=item.tipo_tarea,
+                    texto_original=item.texto_original,
+                    resultado=item.resultado,
+                    fecha=item.fecha,
+                ),
+                "mensaje": f"Registro {pos_desc} {'de tipo ' + tipo_tarea if tipo_tarea else ''} devuelto.",
             }
 
         # Acción: listar (por defecto)
