@@ -315,7 +315,7 @@ Esta interfaz te permite:
 ## 🧩 Integración con n8n
 
 <p align="center">
-  <img src="https://github.com/dasafo/AI-Workflow-Assistant/blob/main/img/n8n.png" width="700">
+  <img src="https://github.com/dasafo/AI-Workflow-Assistant/blob/main/img/n8n_workflow.png" width="700">
 </p>
 
 El sistema incluye flujos pre-configurados para n8n que puedes importar:
