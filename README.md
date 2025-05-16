@@ -17,6 +17,7 @@
 <p align="center">
   <img src="https://github.com/dasafo/AI-Workflow-Assistant/blob/main/img/telegram.gif" width="300">
 </p>
+
 ## 🎯 Características Principales
 
 - 📝 **Procesamiento de Texto Inteligente**:
