@@ -1,0 +1,121 @@
+services:
+  backend:
+    build: 
+      context: ./backend
+    container_name: ai-workflow-backend
+    env_file: .env
+    ports:
+      - "${PORT}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    environment:
+      - PYTHONPATH=/app/backend
+    restart: unless-stopped
+    networks:
+      - ai-network
+
+  postgres:
+    image: postgres:14-alpine
+    container_name: ai-workflow-db
+    env_file: .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ai-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: ai-workflow-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8081:80"
+    depends_on:
+      - postgres
+    networks:
+      - ai-network
+    restart: unless-stopped
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+  redis:
+    image: redis:alpine
+    container_name: ai-workflow-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ai-network
+    restart: unless-stopped
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: ai-workflow-n8n
+    env_file: .env
+    ports:
+      - "${N8N_PORT}:5678"
+    environment:
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PROTOCOL=${N8N_PROTOCOL}
+      - N8N_PORT=${N8N_PORT}
+      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE}
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - ai-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    name: ai-workflow-postgres-data
+  n8n_data:
+    name: ai-workflow-n8n-data
+  redis_data:
+    name: ai-workflow-redis-data
+  pgadmin_data:
+    name: ai-workflow-pgadmin-data
+
+networks:
+  ai-network:
+    name: ai-workflow-network
+    driver: bridge

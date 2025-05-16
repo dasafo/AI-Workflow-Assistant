@@ -1,0 +1,922 @@
+{
+  "name": "AI_Personal_Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -500,
+        100
+      ],
+      "id": "612323f8-5075-48bf-9b2f-79507cde9e7b",
+      "name": "Telegram Trigger",
+      "webhookId": "e796cb4a-b770-4d79-ac5e-3c7cff1346bc",
+      "notesInFlow": false,
+      "credentials": {
+        "telegramApi": {
+          "id": "lEi8yd5dEXD9AHJI",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b40dee67-32d1-4d83-a1fe-8e91bf3a5142",
+              "name": "command",
+              "value": "={{ \n  $json.callback_query \n    ? $json.callback_query.data \n    : (\n        $json.message.text.startsWith('/') \n          ? $json.message.text.split(' ')[0].toLowerCase() \n          : null\n      )\n}}",
+              "type": "string"
+            },
+            {
+              "id": "77ae4efd-a041-4a94-a0d9-265c81058966",
+              "name": "text",
+              "value": "={{ $json.callback_query ? '' : (\n           $json.message.text.startsWith('/') \n             ? $json.message.text.split(' ').slice(1).join(' ') \n             : $json.message.text ) }}",
+              "type": "string"
+            },
+            {
+              "id": "97642dcf-6145-49e8-817f-3f191e14b49a",
+              "name": "chat_id",
+              "value": "={{\n  $json.callback_query\n    ? $json.callback_query.message.chat.id\n    : $json.message.chat.id\n}}\n",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -200,
+        100
+      ],
+      "id": "a08e058c-ae5f-4290-bbf2-c7be7a5a15ee",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ [\"/clasificar\", \"/resumir\", \"/traducir\", \"/consultar\"].includes($json.command) }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "e545ab65-151a-4fa6-9760-400d513e05ee"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Estado"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c6d12e14-19e2-4c9e-96ff-f8adca4805ff",
+                    "leftValue": "={{ $json.text && $json.text.length > 0 && $json.modo_actual === \"/consultar\" }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Consultar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "89e2d41e-67b8-41d6-9e24-0a39955c0ea2",
+                    "leftValue": "={{ $json.text && $json.text.length > 0 && [\"/resumir\", \"/traducir\", \"/clasificar\"].includes($json.modo_actual) }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Procesar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "7db635e4-de24-4642-90fb-1bebb13769da",
+                    "leftValue": "=  {{ $json.command === \"/start\" }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Start"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "allMatchingOutputs": false
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        640,
+        60
+      ],
+      "id": "203e3b2e-8746-4ecd-afda-06ea63c4562b",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/v1/estado",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $json.chat_id }}"
+            },
+            {
+              "name": "modo",
+              "value": "={{ $json.command }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        920,
+        -300
+      ],
+      "id": "471b3a77-989f-4f35-a82f-8a79e47fbe13",
+      "name": "Estado HTTP Request1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/v1/consultar-inteligente",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $json.chat_id }}"
+            },
+            {
+              "name": "texto",
+              "value": "={{ $json.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        940,
+        -60
+      ],
+      "id": "c3176d27-b270-4c1e-814e-d538bb29ce79",
+      "name": "Consultar HTTP Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/v1/procesar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $json.chat_id }}"
+            },
+            {
+              "name": "texto",
+              "value": "={{ $json.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        940,
+        140
+      ],
+      "id": "42ce07ea-ee12-4a08-bd50-38b47180b25c",
+      "name": "Procesar HTTP Request1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "chat_id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        320,
+        80
+      ],
+      "id": "76764798-88fc-48d2-8b14-12f8c81271be",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "let msg = $json.mensaje || '';\nif ($json.consultas && $json.consultas.length > 0) {\n  msg += '\\n';\n  $json.consultas.forEach((c, i) => {\n    msg += `${i+1}. [${c.tipo_tarea}] ${c.texto_original.substring(0, 40)}...\\n`;\n  });\n}\nif ($json.fecha) {\n  msg += `\\nFecha: ${$json.fecha}`;\n}\nif ($json.total !== undefined && !$json.consultas) {\n  msg += `\\nTotal: ${$json.total}`;\n}\n// ¡Asegúrate de devolver también el chat_id!\nreturn [{ json: { text: msg, chat_id: $json.chat_id } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1160,
+        -60
+      ],
+      "id": "c3a206f0-390b-4c40-bfff-cdda50f7402b",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "=¡Hola\\! 👋  \nSoy el *Asistente de Workflow IA*\\.  \n\nPuedo:  \n• Resumir textos \\(/resumir\\)  \n• Traducir 🇪🇸↔️🇬🇧 \\(/traducir\\)  \n• Clasificar contenido \\(/clasificar\\)  \n• Consultar tu historial \\(/consultar\\)  \n",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🏷️ Clasificar",
+                    "additionalFields": {
+                      "callback_data": "/clasificar"
+                    }
+                  },
+                  {
+                    "text": "📝 Resumir",
+                    "additionalFields": {
+                      "callback_data": "/resumir"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🔍 Consultar histórico",
+                    "additionalFields": {
+                      "callback_data": "/consultar"
+                    }
+                  },
+                  {
+                    "text": "Traducir",
+                    "additionalFields": {
+                      "callback_data": "/traducir"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1380,
+        340
+      ],
+      "id": "91db2343-91f3-44f5-8353-5b6f8a1c18ea",
+      "name": "Telegram Start",
+      "webhookId": "7f61b9aa-c56e-451b-8ce1-f675709b2527",
+      "credentials": {
+        "telegramApi": {
+          "id": "lEi8yd5dEXD9AHJI",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/v1/estado",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $json.chat_id }}"
+            },
+            {
+              "name": "modo",
+              "value": "null"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        340
+      ],
+      "id": "38968522-c3db-465d-bda3-b25be5744fc1",
+      "name": "Rest Estado HTTP Request"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "No entiendo ese comando. Marca /start si quieres volver a empezar.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        560
+      ],
+      "id": "8e5088c4-5a38-4f70-adc1-4d4a6de09028",
+      "name": "Telegram Unknown Command",
+      "webhookId": "fa8e0fa0-0220-4a62-ada0-6a24334dada7",
+      "credentials": {
+        "telegramApi": {
+          "id": "lEi8yd5dEXD9AHJI",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "88b6be0d-a482-47db-819b-db6c35df8f95",
+              "leftValue": "={{$json.command.startsWith('/start')}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        900,
+        440
+      ],
+      "id": "3f37435c-48d3-42c6-bccc-74b707eafbfe",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.mensaje }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        -300
+      ],
+      "id": "3be8eb16-73f8-4a3c-b3c9-42e8af50d870",
+      "name": "Telegram Estado",
+      "webhookId": "7f61b9aa-c56e-451b-8ce1-f675709b2527",
+      "credentials": {
+        "telegramApi": {
+          "id": "lEi8yd5dEXD9AHJI",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.text }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🏷️ Clasificar",
+                    "additionalFields": {
+                      "callback_data": "/clasificar"
+                    }
+                  },
+                  {
+                    "text": "📝 Resumir",
+                    "additionalFields": {
+                      "callback_data": "/resumir"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🔍 Consultar histórico",
+                    "additionalFields": {
+                      "callback_data": "/consultar"
+                    }
+                  },
+                  {
+                    "text": "🇪🇸↔️🇬🇧 Traducir",
+                    "additionalFields": {
+                      "callback_data": "/traducir"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1380,
+        -60
+      ],
+      "id": "1642cb44-c119-4f18-9682-c98363a61b35",
+      "name": "Telegram Consulta",
+      "webhookId": "7f61b9aa-c56e-451b-8ce1-f675709b2527",
+      "credentials": {
+        "telegramApi": {
+          "id": "lEi8yd5dEXD9AHJI",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.resultado || $json.mensaje }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🏷️ Clasificar",
+                    "additionalFields": {
+                      "callback_data": "/clasificar"
+                    }
+                  },
+                  {
+                    "text": "📝 Resumir",
+                    "additionalFields": {
+                      "callback_data": "/resumir"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🔍 Consultar histórico",
+                    "additionalFields": {
+                      "callback_data": "/consultar"
+                    }
+                  },
+                  {
+                    "text": "🇪🇸↔️🇬🇧 Traducir",
+                    "additionalFields": {
+                      "callback_data": "/traducir"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1180,
+        140
+      ],
+      "id": "0ac5c01a-80a2-4a34-bafc-21ec31df2e20",
+      "name": "Telegram Procesar",
+      "webhookId": "7f61b9aa-c56e-451b-8ce1-f675709b2527",
+      "credentials": {
+        "telegramApi": {
+          "id": "lEi8yd5dEXD9AHJI",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/v1/estado",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $json.chat_id }}"
+            },
+            {
+              "name": "modo",
+              "value": "={{ $json.command ? $json.command : '' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        -100
+      ],
+      "id": "937b4bac-e29c-4bed-8aa6-794cfb8cf96e",
+      "name": "Obtener Estado HTTP Request"
+    }
+  ],
+  "pinData": {
+    "Telegram Trigger": [
+      {
+        "json": {
+          "update_id": 192437712,
+          "message": {
+            "message_id": 159,
+            "from": {
+              "id": 3117202,
+              "is_bot": false,
+              "first_name": "David",
+              "language_code": "en"
+            },
+            "chat": {
+              "id": 3117202,
+              "first_name": "David",
+              "type": "private"
+            },
+            "date": 1746790075,
+            "text": "/clasificar Se analiza el 80 aniversario de la Victoria sobre los nazis y de la liberación de los campos de exterminio, como el de Mauthausen, donde fueron deportados, esclavizados, torturados y asesinados miles de españoles republicanos. Con la participación de Juan Manuel Calvo Gascón, presidente de Amical de Mauthausen.",
+            "entities": [
+              {
+                "offset": 0,
+                "length": 11,
+                "type": "bot_command"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "Estado HTTP Request1": [
+      {
+        "json": {
+          "chat_id": 3117202,
+          "modo_actual": "/traducir",
+          "mensaje": "¿Qué texto quieres traducir?",
+          "success": true
+        }
+      }
+    ],
+    "Edit Fields2": [
+      {
+        "json": {
+          "command": "/traducir",
+          "text": "\n",
+          "user_id": 3117202
+        }
+      }
+    ],
+    "Rest Estado HTTP Request": [
+      {
+        "json": {
+          "chat_id": 3117202,
+          "modo_actual": "/traducir",
+          "mensaje": "¿Qué texto quieres traducir?",
+          "success": true
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Obtener Estado HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Estado HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Consultar HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Procesar HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [],
+        []
+      ]
+    },
+    "Estado HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Telegram Estado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Telegram Procesar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Telegram Consulta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rest Estado HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Telegram Start",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Rest Estado HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Unknown Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Estado HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "947fb8c5-a1f8-484f-8f6b-e1ef7d3fc867",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cebacd37867b368902a45329855f8801c3bd134986c25b6097ced791d375e561"
+  },
+  "id": "4Kr09Q7p6ZH6BzoG",
+  "tags": []
+}

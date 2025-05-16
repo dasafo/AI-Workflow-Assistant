@@ -1,0 +1,37 @@
+# API y servidor
+fastapi==0.115.12            # Framework web de alto rendimiento para construir APIs
+uvicorn==0.29.0              # Servidor ASGI para ejecutar FastAPI
+pydantic==2.7.3              # Validación de datos y settings usando Python type annotations
+pydantic-settings>=2.0.3     # Manejo de configuraciones con Pydantic
+
+# Base de datos
+asyncpg>=0.28.0              # Driver PostgreSQL asíncrono para Python
+psycopg2-binary>=2.9.9       # Driver PostgreSQL para Python (para health checks síncronos)
+sqlalchemy==2.0.29           # ORM (Object Relational Mapper) para bases de datos
+alembic>=1.12.1              # Herramienta de migraciones para SQLAlchemy
+
+# Cache
+redis>=5.0.1                 # Cliente para Redis, sistema de almacenamiento en memoria
+cachetools>=5.3.0            # Implementaciones de caché en memoria para Python
+
+# IA y procesamiento
+openai==1.78.1               # SDK oficial de OpenAI para acceder a GPT y otros modelos
+python-dotenv>=1.0.0         # Carga variables de entorno desde archivos .env
+python-jose==3.3.0           # Implementación de JWT, JWE, JWS para Python
+passlib==1.7.4               # Biblioteca para manejar y hashear contraseñas
+httpx==0.27.0                # Cliente HTTP asíncrono para Python
+jinja2==3.1.3                # Motor de plantillas para Python
+tiktoken==0.5.2              # Tokenizador usado por modelos de OpenAI
+aiohttp==3.9.5               # Framework HTTP asíncrono
+
+# Autenticación
+aiohttp-oauth2>=0.0.3        # Cliente OAuth2 asíncrono basado en aiohttp
+pyjwt>=2.8.0                 # Implementación de JSON Web Tokens en Python
+
+# Testing
+pytest>=7.4.0                # Framework para escribir tests en Python
+pytest-asyncio>=0.21.1       # Plugin para pytest para soporte de tests asíncronos
+
+# Utilidades
+python-multipart==0.0.9      # Soporte para analizar solicitudes multipart/form-data
+typing-extensions>=4.8.0     # Extensiones de type hints para versiones anteriores de Python

@@ -1,0 +1,98 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Entornos Virtuales y Variables de Entorno
+.env
+*.env
+!.env.example
+.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.python-version
+
+# Logs y Bases de Datos
+*.log
+*.sqlite
+*.sqlite3
+*.db
+postgres_data/
+.coverage
+htmlcov/
+.hypothesis/
+.pytest_cache/
+
+# Docker
+*.pid
+docker-compose.override.yml
+docker-data/
+n8n_data/
+
+# IDEs y Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*.iml
+.DS_Store
+Thumbs.db
+.project
+.classpath
+.settings/
+.ipynb_checkpoints
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Archivos Sensibles
+secrets.json
+*.key
+*.pem
+credentials.json
+.secret_key
+.env.*
+!.env.example
+
+# Archivos Temporales
+*.bak
+*.tmp
+*.temp
+*~
+.*.sw[po]
+.cache/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Archivos Específicos del Proyecto
+deploy/.ssh/
+/media/
+/static/
+local_settings.py
+db.sqlite3-journal
+instance/
+
+# Archivos de Migración y Base de Datos Auto-generados
+# No ignorar si son parte del repositorio oficial
+# migrations/
