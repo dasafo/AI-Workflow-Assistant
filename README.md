@@ -10,7 +10,7 @@
 </div>
 
 <p align="center">
-  <img src="https://github.com/dasafo/AI-Workflow-Assistant/blob/master/img/flux.png" width="800">
+  <img src="https://github.com/dasafo/AI-Workflow-Assistant/blob/main/img/flux.png" width="800">
 </p>
 
 > Sistema de automatización inteligente que integra IA para procesar y automatizar tareas usando FastAPI, n8n y OpenAI, permitiendo resúmenes, traducciones y clasificación de textos a través de una interfaz de Telegram o API REST.
@@ -132,7 +132,7 @@ Estas son algunas posibilidades que podrías implementar con AI Workflow Assista
 ### 💼 Productividad Ejecutiva
 
 <p align="center">
-  <img src="https://github.com/dasafo/AI-Workflow-Assistant/blob/master/img/img4.png" width="600">
+  <img src="https://github.com/dasafo/AI-Workflow-Assistant/blob/main/img/img4.png" width="600">
 </p>
 
 **¿Y si pudieras...?**
@@ -151,7 +151,7 @@ Estas son algunas posibilidades que podrías implementar con AI Workflow Assista
 ### 🔬 Conocimiento Técnico
 
 <p align="center">
-  <img src="https://github.com/dasafo/AI-Workflow-Assistant/blob/master/img/img5.png" width="600">
+  <img src="https://github.com/dasafo/AI-Workflow-Assistant/blob/main/img/img5.png" width="600">
 </p>
 
 **Imagina poder:**
@@ -175,7 +175,7 @@ curl -X POST http://localhost:8000/api/v1/procesar \
 ### 📊 Inteligencia de Negocio
 
 <p align="center">
-  <img src="https://github.com/dasafo/AI-Workflow-Assistant/blob/master/img/img6.png" width="600">
+  <img src="https://github.com/dasafo/AI-Workflow-Assistant/blob/main/img/img6.png" width="600">
 </p>
 
 **¿Te gustaría...?**
@@ -314,7 +314,7 @@ Esta interfaz te permite:
 ## 🧩 Integración con n8n
 
 <p align="center">
-  <img src="https://github.com/dasafo/AI-Workflow-Assistant/blob/master/img/n8n.png" width="700">
+  <img src="https://github.com/dasafo/AI-Workflow-Assistant/blob/main/img/n8n.png" width="700">
 </p>
 
 El sistema incluye flujos pre-configurados para n8n que puedes importar:
