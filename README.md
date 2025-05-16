@@ -15,7 +15,7 @@
 
 > Sistema de automatización inteligente que integra IA para procesar y automatizar tareas usando FastAPI, n8n y OpenAI, permitiendo resúmenes, traducciones y clasificación de textos a través de una interfaz de Telegram o API REST.
 <p align="center">
-  <img src="https://github.com/dasafo/AI-Workflow-Assistant/blob/master/img/flux.png" width="800">
+  <img src="https://github.com/dasafo/AI-Workflow-Assistant/blob/main/img/telegram.gif" width="800">
 </p>
 ## 🎯 Características Principales
 
