@@ -1,3 +1,9 @@
+"""
+Este módulo proporciona una capa de caché para almacenar y recuperar resultados de funciones.
+
+Utiliza Redis como backend de caché.
+
+"""
 import os
 import json
 import hashlib

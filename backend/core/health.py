@@ -1,3 +1,9 @@
+"""
+Este módulo proporciona funciones de verificación de estado para la aplicación.
+
+Incluye verificaciones de conexión a la base de datos y caché.
+
+"""
 from typing import Dict, Any
 from sqlalchemy.sql import text
 from services.db import get_db_session

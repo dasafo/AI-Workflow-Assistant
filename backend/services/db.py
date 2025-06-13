@@ -1,3 +1,9 @@
+"""
+Este módulo proporciona funciones para interactuar con la base de datos PostgreSQL.
+
+Incluye funciones para inicializar la base de datos, obtener sesiones de base de datos, guardar consultas, aplicar migraciones y gestionar el estado del usuario.
+
+"""
 import os
 import logging
 from typing import AsyncGenerator, Any, Dict

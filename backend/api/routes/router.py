@@ -1,3 +1,9 @@
+"""
+Este módulo define el router principal de la API.
+
+Incluye el router de endpoints profesionales y configura las rutas de la API.
+
+"""
 from fastapi import APIRouter
 from core.logging import setup_logger
 from api.workflow_endpoints import router as workflow_router

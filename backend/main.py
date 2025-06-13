@@ -1,3 +1,9 @@
+"""
+Este archivo es el punto de entrada principal de la aplicación FastAPI.
+
+Configura la aplicación FastAPI, define las rutas de la API, maneja excepciones y configura el registro de eventos.
+
+"""
 import os
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse

@@ -1,3 +1,9 @@
+"""
+Este módulo define los modelos de datos para la aplicación.
+
+Incluye modelos para consultas de IA y estado de usuario.
+
+"""
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Text, DateTime, BigInteger
 from sqlalchemy.sql import func

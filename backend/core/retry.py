@@ -1,3 +1,9 @@
+"""
+Este módulo proporciona un decorador para reintentar funciones asíncronas en caso de excepciones específicas.
+
+Utiliza un enfoque de backoff exponencial con jitter para controlar el tiempo de espera entre reintentos.
+
+"""
 import asyncio
 import functools
 import os

@@ -1,3 +1,9 @@
+"""
+Este módulo proporciona una configuración de registro (logger) para la aplicación.
+
+Configura un logger con formato consistente para todos los módulos.
+
+"""
 import logging
 import sys
 from typing import Optional

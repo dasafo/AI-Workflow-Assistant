@@ -1,3 +1,9 @@
+"""
+Este módulo define los endpoints de flujo de trabajo para la API.
+
+Incluye endpoints para gestionar el estado del usuario, procesar texto, consultar historial y consultar inteligente.
+
+"""
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Dict, Any, Optional
 import logging

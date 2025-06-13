@@ -1,3 +1,9 @@
+"""
+Este módulo define las excepciones personalizadas para el proyecto.
+
+Proporciona una clase base para errores de API, errores de validación, errores de servicios externos y errores internos.
+
+"""
 from typing import Any, Dict, Optional
 from fastapi import HTTPException, status
 from core.logging import setup_logger
