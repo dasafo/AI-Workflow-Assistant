@@ -96,8 +96,13 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Personalizar OpenAPI
 def custom_openapi():
+    """
+    Personaliza el esquema OpenAPI para la aplicación FastAPI.
+
+    Returns:
+        dict: Esquema OpenAPI personalizado
+    """
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
@@ -116,17 +121,35 @@ app.openapi = custom_openapi
 # Eventos de inicio/apagado
 @app.on_event("startup")
 async def startup_event():
+    """
+    Evento de inicio de la aplicación.
+
+    Este evento se ejecuta cuando la aplicación FastAPI se inicia.
+    Aquí puedes realizar cualquier inicialización necesaria, como establecer conexiones,
+    configurar pools, etc.
+    """
     logger.info("Iniciando aplicación...")
     # Inicializar aquí conexiones, pool, etc.
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    """
+    Evento de apagado de la aplicación.
+
+    Este evento se ejecuta cuando la aplicación FastAPI se apaga.
+    Aquí puedes realizar cualquier limpieza necesaria, como cerrar conexiones, etc.
+    """
     logger.info("Cerrando aplicación...")
     # Cerrar aquí conexiones, etc.
 
 
 if __name__ == "__main__":
+    """
+    Punto de entrada principal de la aplicación FastAPI.
+
+    Configura el servidor uvicorn para iniciar la aplicación FastAPI.
+    """
     import uvicorn
 
     port = int(os.getenv("PORT", "8000"))

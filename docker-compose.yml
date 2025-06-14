@@ -1,74 +1,89 @@
+# =========================================================
+# AI Workflow Assistant - Docker Compose Configuration
+# =========================================================
+# Este archivo define la infraestructura completa del sistema
+# incluyendo backend, base de datos, caché, automatización y herramientas
+
 services:
+  # ===== BACKEND API =====
+  # Servicio principal FastAPI que maneja la lógica de negocio
   backend:
     build: 
-      context: ./backend
+      context: ./backend  # Construye desde el directorio backend/
     container_name: ai-workflow-backend
-    env_file: .env
+    env_file: .env  # Carga variables de entorno desde .env
     ports:
-      - "${PORT}:8000"
+      - "${PORT}:8000"  # Expone el puerto configurado (por defecto 8000)
     depends_on:
       postgres:
-        condition: service_healthy
+        condition: service_healthy  # Espera a que PostgreSQL esté listo
       redis:
-        condition: service_healthy
+        condition: service_healthy   # Espera a que Redis esté listo
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]  # Endpoint de salud
+      interval: 30s    # Verifica cada 30 segundos
+      timeout: 10s     # Timeout de 10 segundos por verificación
+      retries: 3       # 3 reintentos antes de marcar como unhealthy
+      start_period: 30s # Espera 30s después del inicio antes de verificar
     environment:
-      - PYTHONPATH=/app/backend
-    restart: unless-stopped
+      - PYTHONPATH=/app/backend  # Configura el path de Python
+    restart: unless-stopped  # Reinicia automáticamente excepto si se detiene manualmente
     networks:
-      - ai-network
+      - ai-network  # Conecta a la red personalizada
 
+  # ===== BASE DE DATOS =====
+  # PostgreSQL para persistencia de datos
   postgres:
-    image: postgres:14-alpine
+    image: postgres:14-alpine  # Imagen ligera de PostgreSQL 14
     container_name: ai-workflow-db
     env_file: .env
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}      # Usuario de la BD
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}  # Contraseña de la BD
+      - POSTGRES_DB=${POSTGRES_DB}          # Nombre de la base de datos
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "${POSTGRES_PORT}:5432"  # Expone puerto PostgreSQL (por defecto 5432)
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./backend/migrations:/docker-entrypoint-initdb.d
+      - postgres_data:/var/lib/postgresql/data          # Persistencia de datos
+      - ./backend/migrations:/docker-entrypoint-initdb.d  # Scripts de inicialización
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 10s  # Verifica cada 10 segundos
+      timeout: 5s    # Timeout más corto para BD
+      retries: 5     # Más reintentos para BD crítica
     networks:
       - ai-network
 
+  # ===== ADMINISTRACIÓN DE BASE DE DATOS =====
+  # pgAdmin4 para gestión visual de PostgreSQL
   pgadmin:
-    image: dpage/pgadmin4
+    image: dpage/pgadmin4  # Interfaz web para administrar PostgreSQL
     container_name: ai-workflow-pgadmin
+    env_file: .env  # Carga variables de entorno desde .env
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}     # Email de acceso desde .env
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}            # Contraseña de acceso desde .env
     ports:
-      - "8081:80"
+      - "${PGADMIN_PORT}:80"  # Puerto configurable desde .env (por defecto 8081)
     depends_on:
-      - postgres
+      - postgres  # Requiere que PostgreSQL esté ejecutándose
     networks:
       - ai-network
     restart: unless-stopped
     volumes:
-      - pgadmin_data:/var/lib/pgadmin
+      - pgadmin_data:/var/lib/pgadmin  # Persistencia de configuración pgAdmin
 
+  # ===== SISTEMA DE CACHÉ =====
+  # Redis para cache de respuestas de IA y sesiones
   redis:
-    image: redis:alpine
+    image: redis:alpine  # Imagen ligera de Redis
     container_name: ai-workflow-redis
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "${REDIS_PORT:-6379}:6379"  # Puerto Redis (por defecto 6379)
     volumes:
-      - redis_data:/data
+      - redis_data:/data  # Persistencia opcional de datos Redis
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "ping"]  # Test simple de conectividad
       interval: 10s
       timeout: 5s
       retries: 5
@@ -76,28 +91,30 @@ services:
       - ai-network
     restart: unless-stopped
 
+  # ===== AUTOMATIZACIÓN DE WORKFLOWS =====
+  # n8n para orquestación de flujos de trabajo sin código
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:latest  # Última versión de n8n
     container_name: ai-workflow-n8n
     env_file: .env
     ports:
-      - "${N8N_PORT}:5678"
+      - "${N8N_PORT}:5678"  # Interfaz web de n8n (por defecto puerto 5678)
     environment:
-      - N8N_HOST=${N8N_HOST}
-      - N8N_PROTOCOL=${N8N_PROTOCOL}
-      - N8N_PORT=${N8N_PORT}
-      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE}
-      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
-      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - N8N_HOST=${N8N_HOST}                    # Host público para webhooks
+      - N8N_PROTOCOL=${N8N_PROTOCOL}            # Protocolo (http/https)
+      - N8N_PORT=${N8N_PORT}                    # Puerto de n8n
+      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE}      # Activar autenticación básica
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}          # Usuario para acceso
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}  # Contraseña para acceso
     volumes:
-      - n8n_data:/home/node/.n8n
+      - n8n_data:/home/node/.n8n  # Persistencia de workflows y configuración
     depends_on:
       postgres:
-        condition: service_healthy
+        condition: service_healthy  # Requiere BD operativa
       backend:
-        condition: service_healthy
+        condition: service_healthy  # Requiere API backend operativa
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
+      test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]  # Endpoint de salud de n8n
       interval: 30s
       timeout: 10s
       retries: 3
@@ -105,17 +122,21 @@ services:
       - ai-network
     restart: unless-stopped
 
+# ===== VOLÚMENES PERSISTENTES =====
+# Definición de volúmenes para persistencia de datos
 volumes:
   postgres_data:
-    name: ai-workflow-postgres-data
+    name: ai-workflow-postgres-data    # Datos de PostgreSQL
   n8n_data:
-    name: ai-workflow-n8n-data
+    name: ai-workflow-n8n-data        # Workflows y configuración de n8n
   redis_data:
-    name: ai-workflow-redis-data
+    name: ai-workflow-redis-data      # Datos de Redis (opcional)
   pgadmin_data:
-    name: ai-workflow-pgadmin-data
+    name: ai-workflow-pgadmin-data    # Configuración de pgAdmin
 
+# ===== RED PERSONALIZADA =====
+# Red Docker para comunicación segura entre servicios
 networks:
   ai-network:
-    name: ai-workflow-network
-    driver: bridge
+    name: ai-workflow-network  # Nombre de la red
+    driver: bridge            # Driver de red tipo bridge (por defecto)

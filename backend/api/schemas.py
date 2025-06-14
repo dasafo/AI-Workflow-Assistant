@@ -1,7 +1,8 @@
 """
 Este módulo define los esquemas de datos para la API.
 
-Incluye modelos para solicitudes y respuestas de estado, procesamiento de texto, consulta de historial y consulta inteligente.
+Incluye modelos para solicitudes y respuestas de estado, procesamiento de texto, consulta de historial
+ y consulta inteligente.
 
 """
 from pydantic import BaseModel
